@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "golang.go",
+    "ms-azuretools.vscode-docker",
+    "hashicorp.terraform",
+    "redhat.vscode-yaml",
+    "timonwong.shellcheck",
+    "eamodio.gitlens",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ms-mssql.mssql",
+    "editorconfig.editorconfig",
+    "bierner.markdown-mermaid"
+  ]
+}

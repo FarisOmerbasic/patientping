@@ -1,0 +1,45 @@
+# --- secrets: never commit ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+observability/*.url
+.aws-ids.env
+
+# --- terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+.terraformrc
+terraform.rc
+
+# --- kubernetes ---
+kubeconfig*
+*.kubeconfig
+
+# --- go / build output ---
+bin/
+dist/
+coverage.out
+*.test
+app/api
+app/worker
+
+# --- editors / OS / tools ---
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+tmp/

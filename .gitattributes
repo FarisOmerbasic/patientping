@@ -1,0 +1,13 @@
+# Store everything with LF line endings (Windows + WSL safety: CRLF breaks bash scripts with "bad interpreter").
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ico  binary
+*.zip  binary
