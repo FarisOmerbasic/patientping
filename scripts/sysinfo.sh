@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 echo "Hostname: $(hostname)"
 echo "Kernel: $(uname -r)"
 echo "CPUs: $(nproc)"
