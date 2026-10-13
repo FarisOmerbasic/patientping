@@ -27,10 +27,18 @@ if [[ $# -eq 0 ]]; then
   exit 2
 fi
 
-
 failed=0
+status="000"
 for url in "$@"; do
+for r in $(seq 1 "$retries"); do
   status=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$timeout" "$url" || true)
+  if [[ "$status" == "200" ]]; then
+    break
+  fi
+  if [[ "$r" -lt $retries ]]; then
+    sleep 2
+  fi
+  done
   if [[ "$status" == "200" ]]; then
      echo "$url $status OK"
 else
