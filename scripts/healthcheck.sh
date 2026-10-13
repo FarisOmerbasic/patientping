@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 usage() {
+    echo "Usage: healthcheck.sh [-t TIMEOUT] [-r RETRIES] URL [URL...]"
     echo "Script checks the health of a list of URLs provided as arguments."
     echo "Number of failed URLs will be returned as the exit code."
+    echo "Options:"
+    echo "-t TIMEOUT Set the timeout in seconds (default: 5)"
+    echo "-r RETRIES Set the number of retries (default: 3)"
+    echo "-h Displaying help message"
 }
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
@@ -29,9 +34,12 @@ fi
 
 failed=0
 status="000"
+elapsed=0
+printf '%-40s %-6s %10s %s \n' "URL" "Status" "Elapsed(s)" "Result"
 for url in "$@"; do
 for r in $(seq 1 "$retries"); do
-  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$timeout" "$url" || true)
+  result=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time "$timeout" "$url" || true)
+  read -r status elapsed <<< "$result"
   if [[ "$status" == "200" ]]; then
     break
   fi
@@ -40,9 +48,9 @@ for r in $(seq 1 "$retries"); do
   fi
   done
   if [[ "$status" == "200" ]]; then
-     echo "$url $status OK"
+     printf  '%-40s %-6s %10s %s \n' "$url" "$status" "$elapsed" "OK"
 else
-     echo "$url $status FAIL"
+     printf  '%-40s %-6s %10s %s \n' "$url" "$status" "$elapsed" "FAIL"
 failed=$((failed + 1))
 fi
 done
