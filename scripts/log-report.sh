@@ -3,8 +3,7 @@ set -Eeuo pipefail
 
 usage() {
     echo "Usage: log-report.sh LOGFILE"
-    echo "Script prints the name of the log file it was given"
-
+    echo "Script analyzes an Nginx log file and prints a report."
 }
 print_total() {
     local logfile="$1"
@@ -62,6 +61,11 @@ fi
 
 if [[ ! -r "$file" ]]; then
 echo "log-report.sh: Can't be read: $file" >&2
+exit 1
+fi
+
+if [[ ! -s "$file" ]]; then
+echo "log-report.sh: File is empty: $file" >&2
 exit 1
 fi
 
