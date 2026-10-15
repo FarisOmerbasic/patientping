@@ -17,4 +17,9 @@ exit 2
 fi
 file="$1"
 
+if [[ ! -f "$file" ]]; then
+echo "log-report.sh: not a file: $file" >&2
+exit 1
+fi
+
 echo "Report for $file"
