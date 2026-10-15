@@ -33,6 +33,15 @@ print_top_paths() {
     awk '{print $7}' "$logfile" | sort | uniq -c | sort -rn | head -n 5
     echo
 }
+print_5xx() {
+    local logfile="$1"
+    echo "== 5xx errors"
+    local total count
+    total=$(wc -l < "$logfile")
+    count=$(grep -cE '" 5[0-9][0-9] ' "$logfile") 
+    echo "5xx errors: $count ($((count * 100 / total))%)"
+    echo
+}
 
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -60,3 +69,4 @@ print_total "$file"
 print_status_codes "$file"
 print_top_ips "$file"
 print_top_paths "$file"
+print_5xx "$file"
