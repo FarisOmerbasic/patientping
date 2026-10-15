@@ -6,6 +6,13 @@ usage() {
     echo "Script prints the name of the log file it was given"
 
 }
+print_total() {
+    local logfile="$1"
+    echo "== Total requests"
+    wc -l < "$logfile"
+}
+
+
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
   exit 0
@@ -27,4 +34,4 @@ echo "log-report.sh: Can't be read: $file" >&2
 exit 1
 fi
 
-echo "Report for $file"
+print_total "$file"
