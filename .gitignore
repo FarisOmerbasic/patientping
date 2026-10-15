@@ -43,3 +43,6 @@ Thumbs.db
 *.swp
 .idea/
 tmp/
+
+# --- test data generated locally ---
+testdata/access.log
