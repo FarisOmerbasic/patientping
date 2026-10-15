@@ -22,4 +22,9 @@ echo "log-report.sh: not a file: $file" >&2
 exit 1
 fi
 
+if [[ ! -r "$file" ]]; then
+echo "log-report.sh: Can't be read: $file" >&2
+exit 1
+fi
+
 echo "Report for $file"
