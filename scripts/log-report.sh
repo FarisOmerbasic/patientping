@@ -10,12 +10,28 @@ print_total() {
     local logfile="$1"
     echo "== Total requests"
     wc -l < "$logfile"
+    echo
 }
 
 print_status_codes() {
     local logfile="$1"
     echo "== Status codes"
     awk '{print $9}' "$logfile" | sort | uniq -c
+    echo
+}
+
+print_top_ips() {
+    local logfile="$1"
+    echo "== Top 5 IPs"
+    awk '{print $1}' "$logfile" | sort | uniq -c | sort -rn | head -n 5
+    echo
+}
+
+print_top_paths() {
+    local logfile="$1"
+    echo "== Top 5 paths"
+    awk '{print $7}' "$logfile" | sort | uniq -c | sort -rn | head -n 5
+    echo
 }
 
 
@@ -42,3 +58,5 @@ fi
 
 print_total "$file"
 print_status_codes "$file"
+print_top_ips "$file"
+print_top_paths "$file"
