@@ -11,4 +11,10 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-echo "Report for $1"
+if [[ $# -ne 1 ]]; then
+usage
+exit 2
+fi
+file="$1"
+
+echo "Report for $file"
