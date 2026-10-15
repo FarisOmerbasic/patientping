@@ -12,6 +12,12 @@ print_total() {
     wc -l < "$logfile"
 }
 
+print_status_codes() {
+    local logfile="$1"
+    echo "== Status codes"
+    awk '{print $9}' "$logfile" | sort | uniq -c
+}
+
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
@@ -35,3 +41,4 @@ exit 1
 fi
 
 print_total "$file"
+print_status_codes "$file"
