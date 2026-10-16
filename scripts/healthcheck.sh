@@ -27,6 +27,16 @@ esac
 done
 shift $((OPTIND - 1))
 
+if [[ ! "$retries" =~ ^[1-9][0-9]*$ ]]; then
+  echo "healthcheck.sh: retries must be a whole number of 1 or more: $retries" >&2
+  exit 2
+fi
+
+if [[ ! "$timeout" =~ ^[1-9][0-9]*$ ]]; then
+  echo "healthcheck.sh: timeout must be a whole number of 1 or more: $timeout" >&2
+  exit 2
+fi
+
 if [[ $# -eq 0 ]]; then
   usage
   exit 2
