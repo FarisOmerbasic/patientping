@@ -3,7 +3,7 @@ set -Eeuo pipefail
 usage() {
     echo "Usage: healthcheck.sh [-t TIMEOUT] [-r RETRIES] URL [URL...]"
     echo "Script checks the health of a list of URLs provided as arguments."
-    echo "Number of failed URLs will be returned as the exit code."
+    echo "0 indicates all URLs are healthy, 1 indicates at least one URL failed. 2 indicates incorrect usage."
     echo "Options:"
     echo "-t TIMEOUT Set the timeout in seconds (default: 5)"
     echo "-r RETRIES Set the number of retries (default: 3)"
@@ -54,4 +54,9 @@ else
 failed=$((failed + 1))
 fi
 done
-exit "$failed"
+if [[ "$failed" -gt 0 ]]; then
+  echo "Failed is greater than 0, exiting with code 1"
+  exit 1
+fi
+echo "All URLs are healthy, exiting with code 0"
+exit 0
