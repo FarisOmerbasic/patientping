@@ -1,0 +1,6 @@
+[Unit]
+Description=Runs the healthcheck script
+
+[Service]
+Type=oneshot
+ExecStart=/home/Faris/code/patientping/scripts/healthcheck.sh -r 3 http://localhost:8080

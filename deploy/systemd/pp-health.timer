@@ -1,0 +1,8 @@
+[Unit]
+Description=Runs every minute
+
+[Timer]
+OnCalendar=*:0/1
+
+[Install]
+WantedBy=timers.target
