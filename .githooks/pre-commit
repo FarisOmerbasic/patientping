@@ -2,4 +2,5 @@
 set -Eeuo pipefail
 
 echo "pre-commit: checking the day"
+gitleaks git --pre-commit --staged --redact --no-banner -v
 exit 0
