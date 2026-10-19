@@ -3,4 +3,6 @@ set -Eeuo pipefail
 
 echo "pre-commit: checking the day"
 gitleaks git --pre-commit --staged --redact --no-banner -v
+git diff --cached --name-only --diff-filter=ACM -z -- '*.sh' | xargs -0 -r shellcheck
+
 exit 0
