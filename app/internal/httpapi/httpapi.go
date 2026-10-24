@@ -3,6 +3,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -42,8 +43,17 @@ func (a *API) healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// readyz always answers 200 for now. On Day 17 it checks the database.
+// readyz answers 200 when the store answers within 2 seconds, and 503 when
+// it doesn't, so a load balancer stops sending requests here while the
+// database is down. healthz stays 200: the process itself is fine.
 func (a *API) readyz(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	if err := a.store.Ping(ctx); err != nil {
+		a.log.Warn("not ready", "err", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not ready"})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 }
 

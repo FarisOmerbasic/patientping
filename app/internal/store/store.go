@@ -28,9 +28,10 @@ type Appointment struct {
 	RemindedAt *time.Time `json:"reminded_at"`
 }
 
-// Store is everything the handlers need from storage. Memory implements it
-// now, and SQL Server will implement the same methods on Day 17.
+// Store is everything the handlers need from storage. Memory and MSSQL
+// implement it.
 type Store interface {
+	Ping(ctx context.Context) error
 	ListPatients(ctx context.Context) ([]Patient, error)
 	AddPatient(ctx context.Context, p Patient) (Patient, error)
 	ListAppointments(ctx context.Context) ([]Appointment, error)

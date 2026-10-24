@@ -65,3 +65,8 @@ func (m *Memory) hasPatient(id int64) bool {
 	}
 	return false
 }
+
+// Ping always succeeds: memory is always there.
+func (m *Memory) Ping(ctx context.Context) error {
+	return nil
+}
