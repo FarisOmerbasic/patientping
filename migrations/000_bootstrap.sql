@@ -1,6 +1,6 @@
 -- Creates the patientping database and the login pp_app.
--- Run once as sa, after loading .env (set -a; source .env; set +a):
--- sqlcmd -S localhost -U sa -C -b -i migrations/000_bootstrap.sql
+-- The db-init service in compose.yaml runs it as sa on every docker compose up.
+-- sqlcmd takes the pp_app password from the container's environment (env_file: .env).
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'patientping')
     CREATE DATABASE patientping;
 GO
