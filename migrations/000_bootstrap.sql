@@ -1,3 +1,6 @@
+-- Creates the patientping database and the login pp_app.
+-- Run once as sa, after loading .env (set -a; source .env; set +a):
+-- sqlcmd -S localhost -U sa -C -b -i migrations/000_bootstrap.sql
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'patientping')
     CREATE DATABASE patientping;
 GO
