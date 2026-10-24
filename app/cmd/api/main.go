@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -24,7 +25,13 @@ func main() {
 		port = "8080"
 	}
 
-	api := httpapi.New(store.NewMemory(), version, log)
+	st, err := newStore()
+	if err != nil {
+		log.Error("store setup failed", "err", err)
+		os.Exit(1)
+	}
+
+	api := httpapi.New(st, version, log)
 	srv := &http.Server{
 		Addr:              ":" + port,
 		Handler:           api.Routes(),
@@ -52,4 +59,22 @@ func main() {
 		return
 	}
 	log.Info("stopped")
+}
+
+// newStore picks the store named in STORE: memory (the default) or mssql.
+// The mssql store needs DB_ADDR (host:port), DB_NAME, DB_USER and DB_PASSWORD.
+func newStore() (store.Store, error) {
+	switch os.Getenv("STORE") {
+	case "", "memory":
+		return store.NewMemory(), nil
+	case "mssql":
+		for _, name := range []string{"DB_ADDR", "DB_NAME", "DB_USER", "DB_PASSWORD"} {
+			if os.Getenv(name) == "" {
+				return nil, fmt.Errorf("STORE=mssql needs %s", name)
+			}
+		}
+		return store.NewMSSQL(os.Getenv("DB_ADDR"), os.Getenv("DB_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
+	default:
+		return nil, fmt.Errorf("STORE must be memory or mssql, not %q", os.Getenv("STORE"))
+	}
 }

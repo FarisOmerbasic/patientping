@@ -89,6 +89,7 @@ type brokenStore struct{}
 
 var errBroken = errors.New("store is down")
 
+func (brokenStore) Ping(context.Context) error                            { return errBroken }
 func (brokenStore) ListPatients(context.Context) ([]store.Patient, error) { return nil, errBroken }
 func (brokenStore) AddPatient(context.Context, store.Patient) (store.Patient, error) {
 	return store.Patient{}, errBroken
@@ -128,5 +129,20 @@ func TestStoreFails(t *testing.T) {
 				t.Errorf("body = %s, want %s", got, want)
 			}
 		})
+	}
+}
+
+func TestReadyzStoreDown(t *testing.T) {
+	api := New(brokenStore{}, "test", slog.New(slog.DiscardHandler)).Routes()
+	req := httptest.NewRequest("GET", "/readyz", nil)
+	rec := httptest.NewRecorder()
+
+	api.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("code = %d, want 503", rec.Code)
+	}
+	if got, want := strings.TrimSpace(rec.Body.String()), `{"status":"not ready"}`; got != want {
+		t.Errorf("body = %s, want %s", got, want)
 	}
 }
