@@ -38,10 +38,25 @@ services:
 
   api:
     build: ./app
-    ports:
-      - "127.0.0.1:8081:8080"
     environment:
       STORE: "mssql"
+      DB_ADDR: "mssql:1433"
+      DB_NAME: "patientping"
+      DB_USER: "pp_app"
+      DB_PASSWORD: "${PP_DB_PASSWORD:?}"
+    healthcheck:
+      test: ["CMD", "/api", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build: ./app
+    environment:
       DB_ADDR: "mssql:1433"
       DB_NAME: "patientping"
       DB_USER: "pp_app"
@@ -49,6 +64,30 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    command: ["/worker"]
+    healthcheck:
+      test: ["CMD", "/worker", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  web:
+    image: nginx:1.30.6-alpine
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web/public:/usr/share/nginx/html:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pp-mssql:

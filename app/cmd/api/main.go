@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/FarisOmerbasic/patientping/app/internal/health"
 	"github.com/FarisOmerbasic/patientping/app/internal/httpapi"
 	"github.com/FarisOmerbasic/patientping/app/internal/store"
 )
@@ -18,12 +20,23 @@ import (
 var version = "dev"
 
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	healthcheck := flag.Bool("healthcheck", false, "ask the running API's /healthz, then exit 0 (healthy) or 1")
+	flag.Parse()
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	if *healthcheck {
+		if err := health.Check(port); err != nil {
+			fmt.Fprintln(os.Stderr, "unhealthy:", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	st, err := newStore()
 	if err != nil {
