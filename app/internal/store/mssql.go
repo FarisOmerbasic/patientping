@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/url"
+	"time"
 
 	mssql "github.com/microsoft/go-mssqldb"
 )
@@ -70,6 +71,31 @@ func (s *MSSQL) ListAppointments(ctx context.Context) ([]Appointment, error) {
 	if err != nil {
 		return nil, err
 	}
+	return scanAppointments(rows)
+}
+
+// MarkDueReminders sets reminded_at on every appointment that starts within
+// the next `within` and has no reminder yet, and returns those appointments.
+// It's one statement, so two workers can't both pick the same appointment.
+func (s *MSSQL) MarkDueReminders(ctx context.Context, within time.Duration) ([]Appointment, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		UPDATE appointments
+		SET reminded_at = SYSUTCDATETIME()
+		OUTPUT INSERTED.id, INSERTED.patient_id, INSERTED.starts_at, INSERTED.reminded_at
+		WHERE reminded_at IS NULL
+		  AND starts_at > SYSUTCDATETIME()
+		  AND starts_at <= DATEADD(second, @p1, SYSUTCDATETIME())`,
+		int64(within.Seconds()),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return scanAppointments(rows)
+}
+
+// scanAppointments reads id, patient_id, starts_at and reminded_at from each
+// row, and closes rows.
+func scanAppointments(rows *sql.Rows) ([]Appointment, error) {
 	defer rows.Close()
 
 	appointments := []Appointment{}

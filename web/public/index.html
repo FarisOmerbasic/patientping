@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PatientPing</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    #error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>PatientPing</h1>
+  <p id="error" role="alert"></p>
+
+  <h2>Patients</h2>
+  <form id="patient-form">
+    <input name="name" placeholder="Name" required>
+    <input name="phone" placeholder="Phone">
+    <input name="email" type="email" placeholder="Email">
+    <button>Add patient</button>
+  </form>
+  <ul id="patients"></ul>
+
+  <h2>Appointments</h2>
+  <form id="appointment-form">
+    <select name="patient_id" id="patient-select" required></select>
+    <input name="starts_at" type="datetime-local" required>
+    <button>Add appointment</button>
+  </form>
+  <ul id="appointments"></ul>
+
+  <script src="app.js"></script>
+</body>
+</html>
