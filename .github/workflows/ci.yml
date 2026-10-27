@@ -1,0 +1,8 @@
+name: ci
+on: pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Lint job starts"
