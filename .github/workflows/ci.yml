@@ -5,4 +5,5 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Lint job starts"
+      - uses: actions/checkout@v7
+      - run: make lint
