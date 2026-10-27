@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-echo "pre-commit: checking the day"
+echo "pre-commit: gitleaks and shellcheck on the staged files"
 gitleaks git --pre-commit --staged --redact --no-banner -v
 git diff --cached --name-only --diff-filter=ACM -z -- '*.sh' | xargs -0 -r shellcheck
 
