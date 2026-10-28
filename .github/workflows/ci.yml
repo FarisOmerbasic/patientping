@@ -33,3 +33,10 @@ jobs:
         with:
           go-version-file: ./app/go.mod
       - run: make test
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: make build
