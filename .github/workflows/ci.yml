@@ -1,33 +1,35 @@
 name: ci
-on: 
+on:
   pull_request:
   push:
     branches: [main]
 
-permissions: 
+permissions:
   contents: read
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: ./app/go.mod
+      # The same hadolint as on the laptop. The checksum is the release's own (checksums.sha256).
       - name: Install hadolint
         run: |
-          sudo curl -fsSL -o /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.15.1/hadolint-linux-x86_64
-          sudo chmod +x /usr/local/bin/hadolint
-
+          curl -fsSL -o "$RUNNER_TEMP/hadolint" https://github.com/hadolint/hadolint/releases/download/v2.15.1/hadolint-linux-x86_64
+          echo "c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507  $RUNNER_TEMP/hadolint" | sha256sum -c -
+          sudo install -m 0755 "$RUNNER_TEMP/hadolint" /usr/local/bin/hadolint
       - run: make lint
+
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: ./app/go.mod
-
       - run: make test
-
