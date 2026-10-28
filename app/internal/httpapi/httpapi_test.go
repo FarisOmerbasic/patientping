@@ -32,7 +32,7 @@ func TestAPI(t *testing.T) {
 		wantCode int
 		wantBody string
 	}{
-		{"healthz", "GET", "/healthz", "", 200, `{"status":"bad"}`},
+		{"healthz", "GET", "/healthz", "", 200, `{"status":"ok"}`},
 		{"readyz", "GET", "/readyz", "", 200, `{"status":"ready"}`},
 		{"version", "GET", "/version", "", 200, `{"version":"test"}`},
 		{"unknown path", "GET", "/nope", "", 404, "404 page not found"},
