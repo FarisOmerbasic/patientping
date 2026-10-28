@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -16,6 +20,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: ./app/go.mod
+          cache-dependency-path: ./app/go.sum
       # The same hadolint as on the laptop. The checksum is the release's own (checksums.sha256).
       - name: Install hadolint
         run: |
@@ -32,4 +37,13 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: ./app/go.mod
+          cache-dependency-path: ./app/go.sum
       - run: make test
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: make build

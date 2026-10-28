@@ -5,10 +5,11 @@ VERSION ?= dev
 build: ## build the image IMAGE:VERSION (pp-api:dev by default)
 	docker build -t $(IMAGE):$(VERSION) app
 
-lint: ## shellcheck, hadolint and go vet
+lint: ## shellcheck, hadolint, go vet and actionlint
 	shellcheck scripts/*.sh
 	hadolint app/Dockerfile
 	cd app && go vet ./...
+	docker run --rm -v "$(CURDIR):/repo" -w /repo rhysd/actionlint:1.7.12
 
 test: ## run the Go tests
 	cd app && go test ./...

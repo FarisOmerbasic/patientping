@@ -69,7 +69,7 @@ A new database answers `[]`.
 
 `make down` stops the stack and removes the containers, and the data stays in the volume. `docker compose down -v` deletes the data too.
 
-Before a commit, `make ci` runs the lint, the tests and the image build, and `make help` lists all targets. The checks need Go 1.27, `shellcheck` and `hadolint`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
+Before a commit, `make ci` runs the lint, the tests and the image build, and `make help` lists all targets. The checks need Go 1.27, `shellcheck` and `hadolint`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` checks the workflow files with actionlint in a container. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
 
 ## Where it's heading
 
