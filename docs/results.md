@@ -1,0 +1,15 @@
+# Results
+
+Measured numbers for PatientPing, filled in as each part gets built. Targets are set before measuring, and a result that misses its target stays in the table with a note explaining why.
+
+| Metric | Target | Result | Measured on | How it's measured |
+|---|---|---|---|---|
+| API image size | under 25 MB | multi-stage build: 3.76 MB packed (`CONTENT SIZE`), 16.3 MB on disk (`DISK USAGE`). Meets the target: a 6.7 MB static program on `distroless/static-debian13`, running as user 65532, with no shell and no Go compiler. The naive build (Day 14) was 346 MB packed and 1.44 GB on disk: the `golang:1.27.1` image, the source and Go's build cache. With the SQL Server driver (Day 17): 4.36 MB packed, 18.5 MB on disk, still under the target. With the worker in the same image (Day 19): 8.3 MB packed, 31.8 MB on disk, still under the target | 2026-10-25 | `docker images`, naive build (Day 14), multi-stage build (Day 15), both programs (Day 19) |
+| Go test coverage | over 50% | handlers 100.0%; all packages 50.0% (main.go has no tests, it's checked by running it; the store is only tested through the handlers) | 2026-10-21 | `go test ./... -cover` (Day 13) |
+| Fresh clone to a running stack, from the README alone | | `curl` on `/api/patients` answered `[]` about 25 seconds after `make up` (the containers 23 seconds old, `web` still `health: starting`), and all four services were `(healthy)` within a minute. The images were already on the machine: a first start on a new machine also downloads SQL Server | 2026-10-27 | Day 22: `git clone` into `/tmp`, only the README's lines, with its own `COMPOSE_PROJECT_NAME` |
+| CI run time per PR | under 5 min | 1m28s with three jobs and the Go cache (Day 24): `lint` 40 s and `test` 17 s side by side, then `build` 41 s, which starts only when both are green. Meets the target. The run before, without the cache: 1m54s (`lint` 62 s, `test` 38 s), when every job downloaded the Go modules. Go 1.27.1 itself is still downloaded in every run (about 11 s). Day 23, two jobs and no cache: 57 s for a PR run, 51 s on `main` | 2026-10-28 | GitHub Actions run duration (`ELAPSED` in `gh run list`, Days 23 and 24) |
+| Deploy time, approval to healthy | under 10 min | | | deploy job timestamps (Day 38) |
+| Automatic rollback time | under 5 min | | | failed health check until the previous version answers (Day 39) |
+| Rebuild from zero | under 60 min | | | timed rebuild drill (Day 46) |
+| Incident drill, time to detect and fix | | Day 7: detected in about 8 min, fixed in about 2 (a 1.5G file in the tmpfs `/tmp`). Day 20 (the API's container taken off the project's network, nginx answered 502, every service `(healthy)`): round 1, the page back in about 5 min with `docker compose up -d`, cause not found; round 2, the cause found in about 9 min with `ps -a` (empty PORTS) and `inspect` (`Networks: {}`), with hints, and fixed in about 2 more | 2026-10-26 | `/breakit` drills (Days 7, 20 and 47) |
+| AWS cost per month | under $15 | | | Cost Explorer, month to date (Day 46) |

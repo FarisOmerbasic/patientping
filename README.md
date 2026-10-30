@@ -1,6 +1,6 @@
 # PatientPing
 
-A hands-on DevOps project: an appointment reminder service and the infrastructure around it, built up step by step from a laptop to AWS. Built by Faris Omerbasic while learning DevOps and SRE.
+A hands-on DevOps project: an appointment reminder service and the infrastructure around it, built up step by step from a laptop to AWS. Built by Faris Omerbasic while learning DevOps and SRE. The steps are numbered days, so "Day 17" in the docs means the step in which something was added.
 
 Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: containers, CI/CD, AWS, infrastructure as code and monitoring, with Kubernetes after that.
 
@@ -69,7 +69,20 @@ A new database answers `[]`.
 
 `make down` stops the stack and removes the containers, and the data stays in the volume. `docker compose down -v` deletes the data too.
 
-Before a commit, `make ci` runs the lint, the tests and the image build, and `make help` lists all targets. The checks need Go 1.27, `shellcheck` and `hadolint`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` checks the workflow files with actionlint in a container. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
+Before a commit, `make ci` runs the lint, the tests and the image build, and `make help` lists all targets. The checks need Go 1.27, `shellcheck` and `hadolint`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` runs two tools in containers: actionlint checks the workflow files, and gitleaks scans every commit in the history for secrets. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
+
+## How a change reaches `main`
+
+`main` only changes through a pull request. The ruleset in [`.github/rulesets/protect-main.json`](.github/rulesets/protect-main.json) requires the checks `lint`, `test` and `build` from [`ci.yml`](.github/workflows/ci.yml) to pass, keeps the history linear (squash merges), and blocks force pushes and deleting the branch. [`protect-release-tags.json`](.github/rulesets/protect-release-tags.json) keeps the release tags (`v*`) from being moved or deleted. Secret scanning and push protection are on too.
+
+GitHub doesn't read these files. They record what is set, and an edited file is applied with `gh api -X PUT repos/FarisOmerbasic/patientping/rulesets/<id> --input <file>`, where `gh api repos/FarisOmerbasic/patientping/rulesets` lists the ids.
+
+## Docs
+
+- [`docs/runbooks/`](docs/runbooks/): what to do, step by step, when something known goes wrong.
+- [`docs/adr/`](docs/adr/): design decisions, and why they were made.
+- [`docs/results.md`](docs/results.md): measured numbers, each with its target.
+- [`docs/postmortems/`](docs/postmortems/): write-ups after incidents (only the template so far).
 
 ## Where it's heading
 

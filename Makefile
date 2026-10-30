@@ -5,11 +5,12 @@ VERSION ?= dev
 build: ## build the image IMAGE:VERSION (pp-api:dev by default)
 	docker build -t $(IMAGE):$(VERSION) app
 
-lint: ## shellcheck, hadolint, go vet and actionlint
+lint: ## shellcheck, hadolint, go vet, actionlint and gitleaks
 	shellcheck scripts/*.sh
 	hadolint app/Dockerfile
 	cd app && go vet ./...
 	docker run --rm -v "$(CURDIR):/repo" -w /repo rhysd/actionlint:1.7.12
+	docker run --rm -v "$(CURDIR):/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.30.1 git --redact --no-banner .
 
 test: ## run the Go tests
 	cd app && go test ./...
