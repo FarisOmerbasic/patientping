@@ -1,6 +1,6 @@
 # ADR 0002: Design of the Go API
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-10-20
 
 ## Context
