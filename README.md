@@ -69,13 +69,15 @@ A new database answers `[]`.
 
 `make down` stops the stack and removes the containers, and the data stays in the volume. `docker compose down -v` deletes the data too.
 
-Before a commit, `make ci` runs the lint, the tests and the image build, and `make help` lists all targets. The checks need Go 1.27, `shellcheck` and `hadolint`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` runs two tools in containers: actionlint checks the workflow files, and gitleaks scans every commit in the history for secrets. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
+Before a commit, `make ci` runs the lint, the tests, the two image builds and the vulnerability scan, and `make help` lists all targets. The checks need Go 1.27, `shellcheck`, `hadolint` and `trivy`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` runs two tools in containers: actionlint checks the workflow files, and gitleaks scans every commit in the history for secrets. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
 
 ## How a change reaches `main`
 
 `main` only changes through a pull request. The ruleset in [`.github/rulesets/protect-main.json`](.github/rulesets/protect-main.json) requires the checks `lint`, `test` and `build` from [`ci.yml`](.github/workflows/ci.yml) to pass, keeps the history linear (squash merges), and blocks force pushes and deleting the branch. [`protect-release-tags.json`](.github/rulesets/protect-release-tags.json) keeps the release tags (`v*`) from being moved or deleted. Secret scanning and push protection are on too.
 
 GitHub doesn't read these files. They record what is set, and an edited file is applied with `gh api -X PUT repos/FarisOmerbasic/patientping/rulesets/<id> --input <file>`, where `gh api repos/FarisOmerbasic/patientping/rulesets` lists the ids.
+
+`build` also builds both images and scans them with trivy, so a known critical vulnerability stops the pull request. After the merge, the `image` job on `main` builds them again, scans them, and pushes them to `ghcr.io/farisomerbasic/patientping-api` and `ghcr.io/farisomerbasic/patientping-web`, tagged `sha-<commit>` and `latest`. Each `sha-` tag is pushed once, so it always names the image built from that commit.
 
 ## Docs
 
