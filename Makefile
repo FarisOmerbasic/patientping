@@ -1,9 +1,11 @@
 IMAGE ?= pp-api
+WEB_IMAGE ?= pp-web
 VERSION ?= dev
 
-.PHONY: build lint test up down ci help
-build: ## build the image IMAGE:VERSION (pp-api:dev by default)
+.PHONY: build lint test scan up down ci help
+build: ## build the images IMAGE:VERSION and WEB_IMAGE:VERSION (pp-api:dev and pp-web:dev by default)
 	docker build -t $(IMAGE):$(VERSION) app
+	docker build -t $(WEB_IMAGE):$(VERSION) web
 
 lint: ## shellcheck, hadolint, go vet, actionlint and gitleaks
 	shellcheck scripts/*.sh
@@ -15,7 +17,11 @@ lint: ## shellcheck, hadolint, go vet, actionlint and gitleaks
 test: ## run the Go tests
 	cd app && go test ./...
 
-ci: lint test build ## lint, test and build, the same checks CI runs
+scan: ## stop on a CRITICAL vulnerability in the two images (trivy)
+	trivy image --severity CRITICAL --exit-code 1 $(IMAGE):$(VERSION)
+	trivy image --severity CRITICAL --exit-code 1 $(WEB_IMAGE):$(VERSION)
+
+ci: lint test build scan ## lint, test, build and scan, the same checks CI runs
 
 up: ## build the images and start the stack in the background
 	docker compose up -d --build

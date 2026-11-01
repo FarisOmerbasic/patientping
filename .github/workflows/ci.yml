@@ -50,6 +50,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make build
+      # The same trivy as on the laptop, so a CRITICAL finding stops the PR, not only main's run.
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.75.0
+      - run: make scan
 
   image:
     needs: [build]
@@ -71,21 +76,37 @@ jobs:
         run: docker build -t ghcr.io/farisomerbasic/patientping-api:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-api:latest app
       - name: Build web
         run: docker build -t ghcr.io/farisomerbasic/patientping-web:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-web:latest web
-      - name: Scan the api
+      - name: Scan api
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/farisomerbasic/patientping-api:sha-${{ github.sha }}
           severity: CRITICAL
           exit-code: "1"
           version: v0.75.0
-      - name: Scan the web
+      - name: Scan web
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/farisomerbasic/patientping-web:sha-${{ github.sha }}
           severity: CRITICAL
           exit-code: "1"
           version: v0.75.0
+      # A sha- tag is written once. When a re-run finds the commit already published,
+      # nothing is pushed, so the tag keeps its image and latest doesn't move back.
       - name: Push api
-        run: docker push --all-tags ghcr.io/farisomerbasic/patientping-api
+        env:
+          IMAGE: ghcr.io/farisomerbasic/patientping-api
+        run: |
+          if docker manifest inspect "$IMAGE:sha-$GITHUB_SHA" > /dev/null 2>&1; then
+            echo "$IMAGE:sha-$GITHUB_SHA is already published, so nothing is pushed"
+          else
+            docker push --all-tags "$IMAGE"
+          fi
       - name: Push web
-        run: docker push --all-tags ghcr.io/farisomerbasic/patientping-web
+        env:
+          IMAGE: ghcr.io/farisomerbasic/patientping-web
+        run: |
+          if docker manifest inspect "$IMAGE:sha-$GITHUB_SHA" > /dev/null 2>&1; then
+            echo "$IMAGE:sha-$GITHUB_SHA is already published, so nothing is pushed"
+          else
+            docker push --all-tags "$IMAGE"
+          fi
