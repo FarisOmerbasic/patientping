@@ -71,6 +71,20 @@ jobs:
         run: docker build -t ghcr.io/farisomerbasic/patientping-api:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-api:latest app
       - name: Build web
         run: docker build -t ghcr.io/farisomerbasic/patientping-web:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-web:latest web
+      - name: Scan the api
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/farisomerbasic/patientping-api:sha-${{ github.sha }}
+          severity: CRITICAL
+          exit-code: "1"
+          version: v0.75.0
+      - name: Scan the web
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/farisomerbasic/patientping-web:sha-${{ github.sha }}
+          severity: CRITICAL
+          exit-code: "1"
+          version: v0.75.0
       - name: Push api
         run: docker push --all-tags ghcr.io/farisomerbasic/patientping-api
       - name: Push web
