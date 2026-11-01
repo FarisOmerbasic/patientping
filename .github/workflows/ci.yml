@@ -50,3 +50,28 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make build
+
+  image:
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      # Actions from other publishers are pinned to a commit SHA: a tag can be moved, a SHA can't.
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build api
+        run: docker build -t ghcr.io/farisomerbasic/patientping-api:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-api:latest app
+      - name: Build web
+        run: docker build -t ghcr.io/farisomerbasic/patientping-web:sha-${{ github.sha }} -t ghcr.io/farisomerbasic/patientping-web:latest web
+      - name: Push api
+        run: docker push --all-tags ghcr.io/farisomerbasic/patientping-api
+      - name: Push web
+        run: docker push --all-tags ghcr.io/farisomerbasic/patientping-web
