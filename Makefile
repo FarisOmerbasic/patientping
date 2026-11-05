@@ -8,7 +8,7 @@ build: ## build the images IMAGE:VERSION and WEB_IMAGE:VERSION (pp-api:dev and p
 	docker build -t $(WEB_IMAGE):$(VERSION) web
 
 lint: ## shellcheck, hadolint, go vet, jq, actionlint and gitleaks
-	shellcheck scripts/*.sh
+	shellcheck scripts/*.sh deploy/*.sh
 	hadolint app/Dockerfile web/Dockerfile
 	cd app && go vet ./...
 	jq empty infra/policies/*.json
