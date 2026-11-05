@@ -8,6 +8,10 @@ resource "aws_ecr_repository" "api" {
 
 resource "aws_ecr_repository" "web" {
   name = "patientping-web"
+  tags = {
+    Component = "web"
+  }
+
 
   image_scanning_configuration {
     scan_on_push = true
