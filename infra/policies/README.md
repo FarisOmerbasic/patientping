@@ -1,6 +1,6 @@
 # Policies
 
-IAM policies written by hand, as examples of least privilege. They aren't attached to anything.
+IAM policies written by hand. `ecr-pull-and-s3-prefix.json` is an example of least privilege and isn't attached to anything. `pp-ec2-ssm-trust.json` was the trust policy of the role `pp-ec2-ssm`, made and deleted again on 2026-11-05.
 
 ## `ecr-pull-and-s3-prefix.json`
 
@@ -19,7 +19,7 @@ Left out on purpose: deleting files, reading older versions, listing the whole b
 
 A listing has to ask for the prefix with its slash: `aws s3 ls s3://<bucket>/patientping/` is allowed, and `aws s3 ls s3://<bucket>/patientping` is denied.
 
-## How it was checked
+## How `ecr-pull-and-s3-prefix.json` was checked
 
 `validate-policy` checks how a policy is written (known call names, ARNs of the right shape, known condition keys, valid JSON), not what it allows. A `s3:ListBucket` on the objects' ARN instead of the bucket's passes it with no findings, and is still denied at the real call. So the file was also run through the policy simulator, which only evaluates the file and changes nothing in the account. Both need only read access (this project uses `--profile pp-readonly`):
 
@@ -49,3 +49,25 @@ Results on 2026-11-03: `validate-policy` returned no findings, and the simulator
 | `ecr:PutImage`, `ecr:InitiateLayerUpload` | `patientping-api` | `implicitDeny` |
 
 `make lint` checks that every file in this folder is valid JSON (`jq empty`). The AWS checks need credentials, so they don't run in CI yet.
+
+## `pp-ec2-ssm-trust.json`
+
+The trust policy of the role `pp-ec2-ssm`. It says who may take the role on: the EC2 service, which then hands the role to a server through an instance profile of the same name. What the role may do is a separate policy, `AmazonSSMManagedInstanceCore`, which AWS maintains. It lets the SSM agent on the server register with Systems Manager and open sessions, so the server needs no SSH port and no SSH key.
+
+| Part | What it says |
+|---|---|
+| `"Principal": {"Service": "ec2.amazonaws.com"}` | who: the EC2 service |
+| `"Action": "sts:AssumeRole"` | what: take the role on, and get its short-lived credentials |
+| no `Resource` | a trust policy sits on the role, so the role is its resource. A `Resource` line is an error here |
+
+The server got the role's credentials from its metadata service, so no key was ever on its disk: on the server, `ls ~/.aws` found nothing, and `aws sts get-caller-identity` answered `assumed-role/pp-ec2-ssm/i-...`.
+
+A trust policy is checked with the resource type for trust policies, not as an identity policy:
+
+```bash
+aws accessanalyzer validate-policy --policy-type RESOURCE_POLICY \
+  --validate-policy-resource-type AWS::IAM::AssumeRolePolicyDocument \
+  --policy-document file://infra/policies/pp-ec2-ssm-trust.json
+```
+
+It returned no findings. A copy with a `Resource` line got `ROLE_TRUST_POLICY_SYNTAX_ERROR_RESOURCE`. Like the validator above, it checks the shape: it also passed the service name written as `EC2.amazonaws.com`, which the file now spells in lower case, as AWS's documentation does.
