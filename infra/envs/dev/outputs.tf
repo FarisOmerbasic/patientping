@@ -19,6 +19,6 @@ output "instance_id" {
 }
 
 output "public_ip" {
-  description = "The ID of the server's public IP"
+  description = "The server's public IP address"
   value       = aws_instance.web.public_ip
 }

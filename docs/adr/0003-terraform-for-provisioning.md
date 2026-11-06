@@ -9,7 +9,7 @@ The dev network and the server were first built by hand with the AWS CLI (Days 2
 
 - The nine creates for the network had to run in the right order, and each ID lived in a shell variable that was gone once the terminal closed.
 - Taking it apart meant thirteen deletes in reverse order by hand: seven for the network, six for the server and its role.
-- Some mistakes were easy to miss, because AWS accepted them: a second internet gateway after a `--query` typo had left a variable empty, and a subnet made with the VPC's whole block.
+- Some mistakes were easy to miss, because AWS accepted them: a second internet gateway after a `--query` typo had put `None` into a variable, and a subnet made with the VPC's whole block.
 - The same commands had to be typed again every time the environment was rebuilt.
 - What existed, and which permissions the server had, was written down only in AWS and in a log that wasn't in the repo.
 
