@@ -1,7 +1,5 @@
 # PatientPing
 
-A hands-on DevOps project: an appointment reminder service and the infrastructure around it, built up step by step from a laptop to AWS. Built by Faris Omerbasic while learning DevOps and SRE. The steps are numbered days, so "Day 17" in the docs means the step in which something was added.
-
 Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: containers, CI/CD, AWS, infrastructure as code and monitoring, with Kubernetes after that.
 
 ## How it fits together
