@@ -17,16 +17,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-  
       - uses: actions/checkout@v7
-      
-      
-        # The same Terraform as on the laptop. Actions from other publishers are pinned to a commit SHA.
+      # The same Terraform as on the laptop. Actions from other publishers are pinned to a commit SHA.
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: 1.16.5
           terraform_wrapper: false
-
       - run: terraform fmt -check -recursive infra
-
-  
+      # No backend: init downloads the providers and the module, without the state bucket or any AWS keys.
+      # Dev calls the network module, so dev's validate checks the module too.
+      - name: init and validate each config
+        run: |
+          for dir in infra/bootstrap infra/shared infra/envs/dev; do
+            terraform -chdir="$dir" init -backend=false
+            terraform -chdir="$dir" validate
+          done
+      # The same tflint as on the laptop.
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.64.0
+      # The full path in --config: with --recursive, a folder without its own .tflint.hcl gets no AWS rules.
+      - name: tflint
+        working-directory: infra
+        env:
+          # Raises GitHub's download limit for the AWS plugin.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --recursive --config "$PWD/.tflint.hcl"
