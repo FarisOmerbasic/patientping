@@ -1,4 +1,3 @@
-
 variable "availability_zone" {
   description = "The availability zone for the subnet"
   type        = string
@@ -15,7 +14,7 @@ variable "subnet_cidr" {
 }
 
 variable "name" {
-  description = "The name of the VPC"
+  description = "The environment's name, used in the Name tags, for example pp-dev"
   type        = string
 }
 

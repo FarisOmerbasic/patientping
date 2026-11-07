@@ -1,10 +1,10 @@
 output "vpc_id" {
-  description = "The ID of the dev VPC"
+  description = "The ID of the VPC"
   value       = aws_vpc.main.id
 }
 
 output "subnet_id" {
-  description = "The ID of the public subnet, where the server goes"
+  description = "The ID of the public subnet"
   value       = aws_subnet.public.id
 }
 
