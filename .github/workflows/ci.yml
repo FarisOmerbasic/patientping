@@ -67,16 +67,18 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      # Lets the job ask GitHub for its OIDC token. It gives no AWS access by itself.
       id-token: write
     steps:
       - uses: actions/checkout@v7
       # Actions from other publishers are pinned to a commit SHA: a tag can be moved, a SHA can't.
+      # No AWS key is stored in GitHub: the job's OIDC token is traded for the role gha-patientping-ci,
+      # whose trust policy only accepts a push to main in this repository. The keys last one hour.
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
-
       - name: Build api
         run: docker build -t ${{ vars.ECR_REGISTRY }}/patientping-api:sha-${{ github.sha }} -t ${{ vars.ECR_REGISTRY }}/patientping-api:latest app
       - name: Build web

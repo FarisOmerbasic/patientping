@@ -75,7 +75,11 @@ Before a commit, `make ci` runs the lint, the tests, the two image builds and th
 
 GitHub doesn't read these files. They record what is set, and an edited file is applied with `gh api -X PUT repos/FarisOmerbasic/patientping/rulesets/<id> --input <file>`, where `gh api repos/FarisOmerbasic/patientping/rulesets` lists the ids.
 
-`build` also builds both images and scans them with trivy, so a known critical vulnerability stops the pull request. After the merge, the `image` job on `main` builds them again, scans them, and pushes them to `ghcr.io/farisomerbasic/patientping-api` and `ghcr.io/farisomerbasic/patientping-web`, tagged `sha-<commit>` and `latest`. Each `sha-` tag is pushed once, so it always names the image built from that commit.
+`build` also builds both images and scans them with trivy, so a known critical vulnerability stops the pull request. After the merge, the `image` job on `main` builds them again, scans them, and pushes them to the Amazon ECR repositories `patientping-api` and `patientping-web`, tagged `sha-<commit>` and `latest`. Each `sha-` tag is pushed once, so it always names the image built from that commit.
+
+No AWS key is stored in GitHub. The `image` job trades the OIDC token that GitHub signs for each job for the IAM role `gha-patientping-ci`, whose trust policy only accepts a token from a push to `main` in this repository, and whose keys last one hour. The role may log in to ECR and push to the two repositories, nothing else. Its ARN, the region and the registry are repository variables, not secrets, because none of them gives access by itself. The role and its two policies are in [`infra/shared/`](infra/shared/github-oidc.tf) and [`infra/policies/`](infra/policies/README.md).
+
+Up to commit `b95496b`, the images went to GHCR (`ghcr.io/farisomerbasic/patientping-api` and `-web`). Those packages are no longer updated, so their `latest` stays at that commit.
 
 ## Docs
 
