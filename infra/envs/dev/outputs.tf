@@ -12,3 +12,13 @@ output "security_group_id" {
   description = "The ID of the security group pp-web, which lets in TCP 80"
   value       = aws_security_group.web.id
 }
+
+output "instance_id" {
+  description = "The ID of the EC2 instance"
+  value       = aws_instance.web.id
+}
+
+output "public_ip" {
+  description = "The server's public IP address"
+  value       = aws_instance.web.public_ip
+}
