@@ -1,6 +1,6 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
+  "Version": "2012-10-17",
+  "Statement": [
     {
       "Sid": "LogInToEcr",
       "Effect": "Allow",
@@ -11,15 +11,17 @@
       "Sid": "PushPatientpingImages",
       "Effect": "Allow",
       "Action": [
-       "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchCheckLayerAvailability",
         "ecr:CompleteLayerUpload",
         "ecr:BatchGetImage",
         "ecr:InitiateLayerUpload",
         "ecr:PutImage",
         "ecr:UploadLayerPart"
       ],
-      "Resource": ["arn:aws:ecr:us-east-1:586631277130:repository/patientping-api",
-                  "arn:aws:ecr:us-east-1:586631277130:repository/patientping-web"]
+      "Resource": [
+        "arn:aws:ecr:us-east-1:586631277130:repository/patientping-api",
+        "arn:aws:ecr:us-east-1:586631277130:repository/patientping-web"
+      ]
     }
   ]
 }
