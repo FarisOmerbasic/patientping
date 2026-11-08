@@ -25,5 +25,5 @@ variable "subnet_cidr" {
 variable "instance_type" {
   description = "The dev server's instance type"
   type        = string
-  default     = "t3.micro"
+  default     = "c7i-flex.large"
 }
