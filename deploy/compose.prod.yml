@@ -1,3 +1,8 @@
+# The stack on the server: the same services as compose.yaml, with the images pulled from ECR
+# at one sha- tag instead of built. Run from the repo's folder on the server:
+#   docker compose -f deploy/compose.prod.yml up -d
+# Compose reads deploy/.env (next to this file, mode 600), which holds ECR_REGISTRY, TAG and the
+# two passwords from Parameter Store. Plain "docker compose config" prints those passwords.
 name: patientping
 
 services:

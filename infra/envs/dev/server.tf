@@ -15,9 +15,12 @@ resource "aws_iam_role_policy_attachment" "ssm_core" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# What the deploy needs on the server, nothing more: pull the images (the ECR login and the
+# pull, no push, no listing) and read the dev parameters. Every program that runs as root on
+# the server can use these keys.
 resource "aws_iam_role_policy_attachment" "ecr_read" {
   role       = aws_iam_role.ec2_ssm.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 }
 
 resource "aws_iam_role_policy" "read_params" {

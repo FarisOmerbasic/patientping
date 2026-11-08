@@ -6,6 +6,7 @@ IAM policies written by hand.
 |---|---|---|
 | `ecr-pull-and-s3-prefix.json` | an example of least privilege | nothing: it isn't attached anywhere |
 | `pp-ec2-ssm-trust.json` | who may take the dev server's role `pp-ec2-ssm` | `envs/dev/server.tf`, through `file()` |
+| `pp-ec2-read-params.json` | what the dev server's role may read from Parameter Store: the names under `/patientping/dev/` | `envs/dev/server.tf`, as an inline policy |
 | `gha-patientping-ci-trust.json` | who may take the CI role `gha-patientping-ci`: a push to `main` in this repository | `shared/github-oidc.tf`, through `file()` |
 | `gha-patientping-ci-push.json` | what the CI role may do: log in to ECR and push to the two repositories | `shared/github-oidc.tf`, as an inline policy |
 
@@ -59,7 +60,7 @@ Results on 2026-11-03: `validate-policy` returned no findings, and the simulator
 
 ## `pp-ec2-ssm-trust.json`
 
-The trust policy of the role `pp-ec2-ssm`. It says who may take the role on: the EC2 service, which then hands the role to a server through an instance profile of the same name. What the role may do is a separate policy, `AmazonSSMManagedInstanceCore`, which AWS maintains. It lets the SSM agent on the server register with Systems Manager and open sessions, so the server needs no SSH port and no SSH key.
+The trust policy of the role `pp-ec2-ssm`. It says who may take the role on: the EC2 service, which then hands the role to a server through an instance profile of the same name. What the role may do is in three other policies. `AmazonSSMManagedInstanceCore`, which AWS maintains, lets the SSM agent on the server register with Systems Manager and open sessions, so the server needs no SSH port and no SSH key. `AmazonEC2ContainerRegistryPullOnly`, also AWS's, allows the ECR login and pulling images, and nothing else. `pp-ec2-read-params.json`, below, allows reading the dev parameters.
 
 | Part | What it says |
 |---|---|
@@ -78,6 +79,29 @@ aws accessanalyzer validate-policy --policy-type RESOURCE_POLICY \
 ```
 
 It returned no findings. A copy with a `Resource` line got `ROLE_TRUST_POLICY_SYNTAX_ERROR_RESOURCE`. Like the validator above, it checks the shape: it also passed the service name written as `EC2.amazonaws.com`, which the file now spells in lower case, as AWS's documentation does.
+
+## `pp-ec2-read-params.json`
+
+What the dev server's role `pp-ec2-ssm` may read from Parameter Store, where the passwords are kept as `SecureString`s. It's an inline policy (`aws_iam_role_policy`) in `envs/dev/server.tf`, so it belongs to the role and is deleted with it.
+
+| Statement | Allows | On |
+|---|---|---|
+| `ReadPatientpingDevParameters` | `ssm:GetParameter`, `ssm:GetParametersByPath` | the path `/patientping/dev` and every name under it |
+
+There are two ARNs because the two calls are checked against different resources. `GetParameter` is checked against the parameter's own name, which `parameter/patientping/dev/*` matches. `GetParametersByPath` is checked against the path itself, `parameter/patientping/dev`, which the `/*` doesn't match.
+
+The passwords are encrypted with the account's default key `aws/ssm`. Its key policy lets every principal in the account decrypt through SSM, so the role needs no `kms:Decrypt` of its own. It also means that any role that may call `ssm:GetParameter` on these names can read them, including AWS's `ReadOnlyAccess`, which allows `ssm:Get*`. A key of the project's own, whose policy names only this role, would narrow that.
+
+`validate-policy --policy-type IDENTITY_POLICY` returned no findings. The policy simulator, on 2026-11-08:
+
+| Call | On | Decision |
+|---|---|---|
+| `ssm:GetParameter` | `/patientping/dev/db_password`, `/patientping/dev/mssql_sa_password` | `allowed` |
+| `ssm:GetParametersByPath` | `/patientping/dev` | `allowed` |
+| `ssm:GetParameter` | `/patientping/prod/db_password`, `/patientping/development/x`, `/DATABASE_URL` | `implicitDeny` |
+| `ssm:PutParameter`, `ssm:DeleteParameter` | `/patientping/dev/db_password` | `implicitDeny` |
+
+Before the second ARN was added, `GetParametersByPath` on `/patientping/dev` was `implicitDeny`.
 
 ## `gha-patientping-ci-trust.json`
 

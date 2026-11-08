@@ -1,7 +1,7 @@
 {
   "Version": "2012-10-17",
   "Statement": [
-       { 
+    {
       "Sid": "ReadPatientpingDevParameters",
       "Effect": "Allow",
       "Action": [
@@ -9,6 +9,7 @@
         "ssm:GetParametersByPath"
       ],
       "Resource": [
+        "arn:aws:ssm:us-east-1:586631277130:parameter/patientping/dev",
         "arn:aws:ssm:us-east-1:586631277130:parameter/patientping/dev/*"
       ]
     }
