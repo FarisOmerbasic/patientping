@@ -15,6 +15,20 @@ resource "aws_iam_role_policy_attachment" "ssm_core" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# What the deploy needs on the server, nothing more: pull the images (the ECR login and the
+# pull, no push, no listing) and read the dev parameters. Every program that runs as root on
+# the server can use these keys.
+resource "aws_iam_role_policy_attachment" "ecr_read" {
+  role       = aws_iam_role.ec2_ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+}
+
+resource "aws_iam_role_policy" "read_params" {
+  name   = "pp-ec2-read-params"
+  role   = aws_iam_role.ec2_ssm.id
+  policy = file("${path.module}/../../policies/pp-ec2-read-params.json")
+}
+
 resource "aws_iam_instance_profile" "ec2_ssm" {
   name = "pp-ec2-ssm"
   role = aws_iam_role.ec2_ssm.name
@@ -30,7 +44,9 @@ resource "aws_instance" "web" {
   user_data                   = file("${path.module}/../../../deploy/user-data.sh")
 
   root_block_device {
-    encrypted = true
+    encrypted   = true
+    volume_size = 20
+    volume_type = "gp3"
   }
 
   # Only IMDSv2, whatever the AMI allows: a request needs a session token first.

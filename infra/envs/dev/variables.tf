@@ -22,8 +22,10 @@ variable "subnet_cidr" {
   default     = "10.20.1.0/24"
 }
 
+# SQL Server needs about 2 GB of memory, and a t3.micro has 1 GiB for everything. c7i-flex.large
+# has 4 GiB and 2 vCPUs like a t3.medium, which isn't on the free plan's list of instance types.
 variable "instance_type" {
   description = "The dev server's instance type"
   type        = string
-  default     = "t3.micro"
+  default     = "c7i-flex.large"
 }
