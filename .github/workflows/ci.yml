@@ -9,7 +9,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -125,3 +125,42 @@ jobs:
           else
             docker push --all-tags "$IMAGE"
           fi
+
+  deploy:
+    needs: [image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      # Lets the job ask GitHub for its OIDC token. It gives no AWS access by itself.
+      id-token: write
+    steps:
+      # Actions from other publishers are pinned to a commit SHA: a tag can be moved, a SHA can't.
+      # No AWS key is stored in GitHub: the job's OIDC token is traded for the role gha-patientping-ci,
+      # whose trust policy only accepts a push to main in this repository. The keys last one hour.
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Find the server
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters Name=tag:Name,Values=patientping-dev Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          PUBLIC_IP=$(aws ec2 describe-instances --filters Name=tag:Name,Values=patientping-dev Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+          echo "INSTANCE_ID=$INSTANCE_ID" >> "$GITHUB_ENV"
+          echo "PUBLIC_IP=$PUBLIC_IP" >> "$GITHUB_ENV"
+          echo "server: $INSTANCE_ID at $PUBLIC_IP"
+      - name: Deploy
+        run: |
+          CMD_ID=$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment "deploy sha-$GITHUB_SHA" --parameters "commands=[\"curl -fsSL https://raw.githubusercontent.com/FarisOmerbasic/patientping/$GITHUB_SHA/deploy/deploy.sh -o /tmp/deploy.sh\",\"bash /tmp/deploy.sh sha-$GITHUB_SHA\"]" --query Command.CommandId --output text)
+          echo "command: $CMD_ID"
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" || true
+          STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text)
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query StandardOutputContent --output text
+          if [[ "$STATUS" != "Success" ]]; then
+              echo "deploy: the command ended with $STATUS" >&2
+              exit 1
+          fi
+      - name: Smoke test from outside
+        run: |
+          curl -fsS --max-time 10 -o /dev/null -w "%{http_code}\n" "http://$PUBLIC_IP/api/patients"
