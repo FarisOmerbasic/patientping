@@ -10,7 +10,9 @@
             "Condition": {
                 "StringEquals": {
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                    "token.actions.githubusercontent.com:sub": "repo:FarisOmerbasic@154029097/patientping@1413694710:ref:refs/heads/main"
+                    "token.actions.githubusercontent.com:sub": [ "repo:FarisOmerbasic@154029097/patientping@1413694710:ref:refs/heads/main", 
+                    "repo:FarisOmerbasic@154029097/patientping@1413694710:environment:production" ],
+                    "token.actions.githubusercontent.com:ref": "refs/heads/main"
                 }
             }
         }
