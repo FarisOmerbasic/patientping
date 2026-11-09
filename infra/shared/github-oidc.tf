@@ -18,3 +18,10 @@ resource "aws_iam_role_policy" "push_images" {
   role   = aws_iam_role.github_ci.name
   policy = file("${path.module}/../policies/gha-patientping-ci-push.json")
 }
+
+# Policy below is for the deploy job, which is separate from the build job.
+resource "aws_iam_role_policy" "deploy" {
+  name   = "gha-patientping-deploy"
+  role   = aws_iam_role.github_ci.name
+  policy = file("${path.module}/../policies/gha-patientping-ci-deploy.json")
+}
