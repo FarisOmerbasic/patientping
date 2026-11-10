@@ -7,8 +7,9 @@ IAM policies written by hand.
 | `ecr-pull-and-s3-prefix.json` | an example of least privilege | nothing: it isn't attached anywhere |
 | `pp-ec2-ssm-trust.json` | who may take the dev server's role `pp-ec2-ssm` | `envs/dev/server.tf`, through `file()` |
 | `pp-ec2-read-params.json` | what the dev server's role may read from Parameter Store: the names under `/patientping/dev/` | `envs/dev/server.tf`, as an inline policy |
-| `gha-patientping-ci-trust.json` | who may take the CI role `gha-patientping-ci`: a push to `main` in this repository | `shared/github-oidc.tf`, through `file()` |
+| `gha-patientping-ci-trust.json` | who may take the CI role `gha-patientping-ci`: a push to `main` in this repository, or a job in the environment `production` on `main` | `shared/github-oidc.tf`, through `file()` |
 | `gha-patientping-ci-push.json` | what the CI role may do: log in to ECR and push to the two repositories | `shared/github-oidc.tf`, as an inline policy |
+| `gha-patientping-ci-deploy.json` | what the CI role may do to deploy: run `AWS-RunShellScript` on the server tagged `patientping-dev`, read the result, and find the server | `shared/github-oidc.tf`, as the inline policy `gha-patientping-deploy` |
 
 ## `ecr-pull-and-s3-prefix.json`
 
@@ -105,16 +106,17 @@ Before the second ARN was added, `GetParametersByPath` on `/patientping/dev` was
 
 ## `gha-patientping-ci-trust.json`
 
-The trust policy of the role `gha-patientping-ci`. It says who may take the role on: a GitHub Actions job from this repository, on a push to `main`, with the OIDC token GitHub signs for that job. The role is in `shared/github-oidc.tf`, next to the OIDC provider that makes AWS trust GitHub's tokens.
+The trust policy of the role `gha-patientping-ci`. It says who may take the role on: a GitHub Actions job from this repository, either on a push to `main` (the `image` job) or in the environment `production` on `main` (the `deploy` job), with the OIDC token GitHub signs for that job. The role is in `shared/github-oidc.tf`, next to the OIDC provider that makes AWS trust GitHub's tokens.
 
 | Part | What it says |
 |---|---|
 | `"Principal": {"Federated": "arn:aws:iam::586631277130:oidc-provider/token.actions.githubusercontent.com"}` | who: a token checked by the account's OIDC provider for GitHub Actions |
 | `"Action": "sts:AssumeRoleWithWebIdentity"` | what: trade that token for the role's short-lived keys |
 | `token.actions.githubusercontent.com:aud` is `sts.amazonaws.com` | the token was made for AWS STS |
-| `token.actions.githubusercontent.com:sub` is `repo:FarisOmerbasic@154029097/patientping@1413694710:ref:refs/heads/main` | the token comes from this repository, for a push to `main`. Every repository on GitHub gets its tokens from the same issuer, so without this line any of them could take the role |
+| `token.actions.githubusercontent.com:sub` is `repo:FarisOmerbasic@154029097/patientping@1413694710:ref:refs/heads/main` or `repo:FarisOmerbasic@154029097/patientping@1413694710:environment:production` | the token comes from this repository, for a push to `main` or for a job in the environment `production`. Every repository on GitHub gets its tokens from the same issuer, so without this line any of them could take the role |
+| `token.actions.githubusercontent.com:ref` is `refs/heads/main` | the run is on `main`. The environment's `sub` names no branch, so this line keeps a `production` job from another branch out. IAM's check suggested it (`SPECIFIC_GITHUB_REPO_AND_BRANCH_RECOMMENDED`), and the environment itself only allows `main` too |
 
-Both keys are under one `StringEquals`, so both must match, letter for letter. The `sub` has the immutable form that GitHub gives repositories made after 2026-07-15: the owner and the repository each carry their number, so a new repository with the same name doesn't match. `gh api repos/FarisOmerbasic/patientping/actions/oidc/customization/sub` shows the prefix (`sub_claim_prefix`). A pull request's token ends with `:pull_request` and another branch's with `:ref:refs/heads/<branch>`, so both are refused: the `image` job, run once on a pull request as a test, failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. A job with an `environment:` gets yet another `sub`.
+The three keys are under one `StringEquals`, so all three must match, letter for letter. A list, like the two values of `sub`, matches when any one of its values does. The `sub` has the immutable form that GitHub gives repositories made after 2026-07-15: the owner and the repository each carry their number, so a new repository with the same name doesn't match. `gh api repos/FarisOmerbasic/patientping/actions/oidc/customization/sub` shows the prefix (`sub_claim_prefix`). A pull request's token ends with `:pull_request` and another branch's with `:ref:refs/heads/<branch>`, so both are refused: the `image` job, run once on a pull request as a test, failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. A job with an `environment:` gets yet another `sub`.
 
 The provider's ARN is typed into the file as text, so Terraform can't see the link, and the role's block has a `depends_on` on the provider.
 
@@ -148,3 +150,17 @@ aws iam simulate-principal-policy \
 | `ecr:PutImage` | another repository, or `patientping-api` in `eu-west-1` | `implicitDeny` |
 | `ecr:BatchDeleteImage`, `ecr:DeleteRepository`, `ecr:SetRepositoryPolicy` | `patientping-api` | `implicitDeny` |
 | `s3:ListAllMyBuckets`, `iam:CreateUser`, `sts:AssumeRole` | `*` | `implicitDeny` |
+
+## `gha-patientping-ci-deploy.json`
+
+What the role `gha-patientping-ci` may do to deploy, added on Day 38 for the `deploy` job. It's a second inline policy on the same role, `gha-patientping-deploy`.
+
+| Statement | Allows | On |
+|---|---|---|
+| `ReadResultsAndFindTheServer` | `ssm:GetCommandInvocation`, `ec2:DescribeInstances` | `*`: neither call can be limited to one resource |
+| `RunShellScriptOnly` | `ssm:SendCommand` | the document `AWS-RunShellScript` only |
+| `OnlyTheDevServer` | `ssm:SendCommand` | the instances whose tag `Name` is `patientping-dev` (the `ssm:resourceTag/Name` condition) |
+
+`SendCommand` needs both: the document and the instance it runs on. So the job can run a shell script on the dev server and nowhere else, and no other document, such as one that changes the agent or the server's settings.
+
+The policy simulator on the role gave `implicitDeny` for `ssm:SendCommand` before the policy was attached, then `allowed` on an instance tagged `patientping-dev` and `implicitDeny` for another tag. On 2026-11-10, a deploy approved while no server ran was refused with `AccessDeniedException ... managed-instance/None`: the job's lookup found no server, so the command went to `None`, which no statement allows.

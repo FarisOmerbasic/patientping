@@ -18,7 +18,8 @@ usage() {
     echo "Usage: deploy.sh TAG"
     echo "Fetches the release of TAG's commit, starts it on this server and waits until it's healthy."
     echo "TAG is sha- and the full 40-character commit, the tag CI gives the images."
-    echo "Exit codes: 0 deployed and healthy, 1 a step failed or the app didn't become healthy, 2 wrong usage."
+    echo "Exit codes: 0 deployed and healthy, 1 a step failed or the app didn't become healthy"
+    echo "(then the last good tag is deployed again, if there is one), 2 wrong usage."
 }
 
 fetch_release() {
@@ -94,15 +95,15 @@ if wait_healthy; then
     exit 0
 fi
 
-# If we get here, the deployment failed. Roll back to the previous tag if there is one.
+# If we get here, the deployment failed. Roll back to the last good tag if there is one.
 if [[ -f "$current_file" ]]; then
     failed_at="$SECONDS"
     tag=$(cat "$current_file")
     commit="${tag#sha-}"
-    echo "deploy.sh: Rolling back to ${tag} after ${failed_at}s" >&2
+    echo "deploy.sh: rolling back to ${tag} after ${failed_at}s" >&2
     deploy_release
     if wait_healthy; then
-        echo "deploy.sh: Rolled back to $tag in $((SECONDS - failed_at))s" >&2
+        echo "deploy.sh: rolled back to $tag in $((SECONDS - failed_at))s" >&2
     fi
 fi
 exit 1
