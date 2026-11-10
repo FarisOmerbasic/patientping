@@ -11,6 +11,7 @@ trap 'echo "deploy.sh: failed at line $LINENO" >&2; exit 1' ERR
 
 repo_url="https://github.com/FarisOmerbasic/patientping"
 registry="586631277130.dkr.ecr.us-east-1.amazonaws.com"
+current_file="/opt/patientping/CURRENT_TAG"
 export AWS_REGION="us-east-1"
 
 usage() {
@@ -51,8 +52,15 @@ wait_healthy() {
     # between about 40 seconds and 2.5 minutes before it gives up.
     if ! ./scripts/healthcheck.sh -r 20 -t 5 http://localhost/api/patients; then
         echo "deploy.sh: ${tag} failed health check" >&2
-        exit 1
+        return 1
     fi
+}
+
+deploy_release() {
+    fetch_release
+    ecr_login
+    write_env
+    start_stack
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -78,9 +86,23 @@ commit="${tag#sha-}"
 # On a fresh server, Run Command can start this before user data has installed Docker and
 # Compose. This waits until user data has finished.
 cloud-init status --wait > /dev/null
-fetch_release
-ecr_login
-write_env
-start_stack
-wait_healthy
-echo "deploy.sh: $tag is healthy"
+deploy_release
+if wait_healthy; then
+    mkdir -p "$(dirname "$current_file")"
+    echo "$tag" > "$current_file"
+    echo "deploy.sh: ${tag} deployed and healthy"
+    exit 0
+fi
+
+# If we get here, the deployment failed. Roll back to the previous tag if there is one.
+if [[ -f "$current_file" ]]; then
+    failed_at="$SECONDS"
+    tag=$(cat "$current_file")
+    commit="${tag#sha-}"
+    echo "deploy.sh: Rolling back to ${tag} after ${failed_at}s" >&2
+    deploy_release
+    if wait_healthy; then
+        echo "deploy.sh: Rolled back to $tag in $((SECONDS - failed_at))s" >&2
+    fi
+fi
+exit 1
