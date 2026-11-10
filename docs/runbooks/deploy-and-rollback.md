@@ -79,7 +79,7 @@ Since 2026-11-10 the job waits for the server up to three times, about 300 s in 
 |---|---|---|
 | The deploy waits for an approval | *Review deployments* on the run's page | approve, or reject when no server runs |
 | The run queues behind an older one | `gh run list --branch main` shows an older run `waiting` | approve or reject that one |
-| A rollback is running (seen on 2026-11-10) | the command is `InProgress`, then `Failed`, with `Rolling back to ...` in `StandardErrorContent` | nothing: wait. The job turns red, and the site answers with the old version |
+| A rollback is running (seen on 2026-11-10) | the command is `InProgress`, then `Failed`, with `rolling back to ...` in `StandardErrorContent` | nothing: wait. The job turns red, and the site answers with the old version |
 | A fresh server is still running its user data | the server is only minutes old | nothing: `deploy.sh` waits for `cloud-init` first |
 | The agent is offline | check 4 isn't `Online` | wait a minute after the start; if it stays offline, check the instance profile `pp-ec2-ssm` |
 
