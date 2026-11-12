@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
+
 	"github.com/FarisOmerbasic/patientping/app/internal/store"
 )
 
@@ -129,6 +131,34 @@ func TestStoreFails(t *testing.T) {
 				t.Errorf("body = %s, want %s", got, want)
 			}
 		})
+	}
+}
+
+// TestMetrics checks that a request is counted under the route that matched,
+// and that two paths no route matches are both counted as "none": random
+// paths add no new series.
+func TestMetrics(t *testing.T) {
+	patients := requestsTotal.WithLabelValues("/api/patients", "GET", "200")
+	unmatched := requestsTotal.WithLabelValues("none", "none", "404")
+	// The counters are shared with the other tests, so compare differences.
+	patientsBefore, unmatchedBefore := testutil.ToFloat64(patients), testutil.ToFloat64(unmatched)
+
+	api := newTestAPI(t)
+	for _, path := range []string{"/api/patients", "/nope", "/wp-login.php"} {
+		api.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", path, nil))
+	}
+
+	if got := testutil.ToFloat64(patients) - patientsBefore; got != 1 {
+		t.Errorf("GET /api/patients counted %v times, want 1", got)
+	}
+	if got := testutil.ToFloat64(unmatched) - unmatchedBefore; got != 2 {
+		t.Errorf("unknown paths counted %v times as none, want 2", got)
+	}
+
+	rec := httptest.NewRecorder()
+	api.ServeHTTP(rec, httptest.NewRequest("GET", "/metrics", nil))
+	if want := `http_requests_total{code="200",method="GET",route="/api/patients"}`; !strings.Contains(rec.Body.String(), want) {
+		t.Errorf("/metrics has no line %s", want)
 	}
 }
 

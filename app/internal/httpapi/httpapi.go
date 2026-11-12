@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/FarisOmerbasic/patientping/app/internal/store"
 )
 
@@ -26,17 +28,20 @@ func New(s store.Store, version string, log *slog.Logger) *API {
 }
 
 // Routes connects every endpoint of the spec to its handler. A request with
-// the wrong method gets 405, and an unknown path gets 404.
+// the wrong method gets 405, and an unknown path gets 404. Every request is
+// counted and timed (metrics.go), and /metrics shows the numbers. nginx only
+// passes /api/ on, so /metrics can't be reached from outside.
 func (a *API) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", a.healthz)
 	mux.HandleFunc("GET /readyz", a.readyz)
 	mux.HandleFunc("GET /version", a.showVersion)
+	mux.Handle("GET /metrics", promhttp.Handler())
 	mux.HandleFunc("GET /api/patients", a.listPatients)
 	mux.HandleFunc("POST /api/patients", a.addPatient)
 	mux.HandleFunc("GET /api/appointments", a.listAppointments)
 	mux.HandleFunc("POST /api/appointments", a.addAppointment)
-	return mux
+	return instrument(mux)
 }
 
 func (a *API) healthz(w http.ResponseWriter, r *http.Request) {

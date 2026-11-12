@@ -15,6 +15,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/FarisOmerbasic/patientping/app/internal/health"
 	"github.com/FarisOmerbasic/patientping/app/internal/store"
 )
@@ -22,6 +26,20 @@ import (
 const (
 	every  = 30 * time.Second // how often the worker looks
 	within = 24 * time.Hour   // how far ahead an appointment gets its reminder
+)
+
+// The worker's two metrics, shown on /metrics.
+var (
+	// A counter: it only goes up, by one for every reminder sent.
+	remindersSent = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "reminders_sent_total",
+		Help: "Reminders the worker has sent since it started.",
+	})
+	// A gauge: set to a new value every round, so it goes up and down.
+	remindersDue = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "reminders_due",
+		Help: "Appointments the last round found due for a reminder.",
+	})
 )
 
 func main() {
@@ -57,11 +75,13 @@ func main() {
 
 	// /healthz says the process is alive. It stays 200 while the database is
 	// down, because a restart of the worker wouldn't bring the database back.
+	// /metrics shows the reminder numbers to Prometheus.
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintln(w, `{"status":"ok"}`)
 	})
+	mux.Handle("GET /metrics", promhttp.Handler())
 	srv := &http.Server{Addr: ":" + port, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -106,7 +126,9 @@ func remind(ctx context.Context, st *store.MSSQL, log *slog.Logger) {
 		log.Error("reminder round failed", "err", err)
 		return
 	}
+	remindersDue.Set(float64(len(due)))
 	for _, a := range due {
 		log.Info("reminder sent", "appointment_id", a.ID, "patient_id", a.PatientID, "starts_at", a.StartsAt)
+		remindersSent.Inc()
 	}
 }
