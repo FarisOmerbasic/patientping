@@ -15,6 +15,8 @@ flowchart LR
         dbinit["db-init<br/>database and login"]
         migrate["migrate<br/>tables"]
         mssql[("mssql<br/>SQL Server")]
+        prometheus["prometheus<br/>metrics"]
+        grafana["grafana<br/>dashboard"]
     end
 
     browser -->|"127.0.0.1:8080"| web
@@ -23,10 +25,18 @@ flowchart LR
     worker -->|"as pp_app"| mssql
     dbinit -.->|"once, as sa"| mssql
     migrate -.->|"once, as sa"| mssql
+    browser -->|"127.0.0.1:9090"| prometheus
+    prometheus -->|"/metrics every 15 s"| api
+    prometheus -->|"/metrics every 15 s"| worker
+    browser -->|"127.0.0.1:3000"| grafana
+    grafana -->|"queries"| prometheus
 ```
 
-- `web` (nginx) is the only service with a published port, `127.0.0.1:8080`. It serves the page from `web/public` and passes everything under `/api/` to the API, which has no published port of its own.
+- `web` (nginx) is the way in, on `127.0.0.1:8080`. It serves the page from `web/public` and passes everything under `/api/` to the API, which has no published port of its own.
 - `api` and `worker` are two programs from the same Go image. The API answers the page's requests. The worker checks every 30 seconds for appointments that start within 24 hours and logs a reminder for each. Both connect as `pp_app`, a login that can only read and write data.
+- `prometheus` fetches `/metrics` from `api`, `worker` and itself every 15 seconds (`observability/prometheus.yml`). The API counts and times every request by route pattern, method and status code, and the worker counts the reminders it sends. nginx doesn't pass `/metrics` on, so the numbers stay inside the Compose network.
+- `grafana` draws them on the `PatientPing` dashboard: requests per second, the share of 5xx answers, p95 latency and reminders sent. Its data source and the dashboard come from files in `observability/grafana/`, so a new container has them with no clicks. The queries are explained in [`docs/observability.md`](docs/observability.md).
+- Besides `web`, only the pages of Prometheus (`127.0.0.1:9090`) and Grafana (`127.0.0.1:3000`) are published, and only on the laptop's own address.
 - `db-init` and `migrate` run once on every start and exit with 0. `db-init` creates the database and the `pp_app` login (`migrations/000_bootstrap.sql`), and `migrate` applies the numbered migrations in `migrations/`. `api` and `worker` start only after both have finished.
 - SQL Server keeps its data in the named volume `pp-mssql`, so the data survives `make down`.
 
@@ -64,6 +74,10 @@ curl -s localhost:8080/api/patients
 ```
 
 A new database answers `[]`.
+
+Prometheus's page is http://localhost:9090. Under *Status*, *Target health* lists `api`, `worker` and `prometheus` as UP, and the query `rate(http_requests_total[1m])` shows the API's requests per second.
+
+Grafana's page is http://localhost:3000. Log in with `admin` / `admin` (Grafana's default, fine only because the page listens on `127.0.0.1`) and choose *Skip* for the new password. *Dashboards*, *PatientPing* shows the four panels.
 
 `make down` stops the stack and removes the containers, and the data stays in the volume. `docker compose down -v` deletes the data too.
 
