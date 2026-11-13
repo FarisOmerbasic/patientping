@@ -1,8 +1,78 @@
 # PatientPing
 
+[![ci](https://github.com/FarisOmerbasic/patientping/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/FarisOmerbasic/patientping/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/FarisOmerbasic/patientping)](https://github.com/FarisOmerbasic/patientping/releases)
+[![license](https://img.shields.io/github/license/FarisOmerbasic/patientping)](LICENSE)
+
 Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: containers, CI/CD, AWS, infrastructure as code and monitoring, with Kubernetes after that.
 
-## How it fits together
+**Tools:** Bash, Go, Docker and Compose, nginx, SQL Server, GitHub Actions, AWS (EC2, ECR, S3, IAM, Systems Manager), Terraform, Prometheus, Alertmanager, Grafana.
+
+## Architecture
+
+![PatientPing architecture: the laptop with the Compose stack and its monitoring, GitHub Actions, and AWS with the dev server in a VPC](docs/images/architecture.svg)
+
+1. A pull request runs `ci`: the lint, the tests, both image builds and a trivy scan. `main` only changes through a pull request with all three checks green.
+2. After the merge, the `image` job trades the OIDC token that GitHub signs for it at STS for one-hour keys of the role `gha-patientping-ci`. No AWS key is stored in GitHub.
+3. It pushes both images to ECR, tagged `sha-<commit>`, a tag that can't be overwritten.
+4. When a dev server runs, the `deploy` job waits for an approval in the environment `production`, then sends `deploy.sh` to the server through Run Command. With no server, it's skipped.
+5. The SSM agent on the server runs `deploy.sh` as root. The server has no SSH and no keys on it, and Session Manager gives a shell when one is needed.
+6. `deploy.sh` writes the passwords from Parameter Store into `.env`, with the server's own role `pp-ec2-ssm`.
+7. It pulls the images from ECR, starts the stack, and checks `/api/patients` through nginx. A failed check puts the last good release back.
+8. Users reach nginx on port 80 through the internet gateway. The security group lets nothing else in.
+9. Terraform on the laptop builds the network, the role and the server, and keeps its state in S3 with a lock file.
+10. On the laptop, Prometheus fetches the metrics every 15 seconds, Grafana draws them, and Alertmanager sends the alerts to Discord.
+
+## What's in it
+
+| Area | What it does | Where |
+|---|---|---|
+| Linux and Bash | Scripts in strict mode, with a `usage()`, exit codes that mean something (0 healthy, 1 failed, 2 wrong usage) and `shellcheck` in CI: a health check with retries and timeouts, a log report, a system summary, and the installer for the tools. A systemd service and timer run the health check every minute. | [`scripts/`](scripts/), [`deploy/systemd/`](deploy/systemd/) |
+| The app | A Go API and a worker from one image, with health and readiness endpoints, a clean shutdown on `SIGTERM`, JSON logs, Prometheus metrics, and numbered SQL migrations. | [`app/`](app/), [`migrations/`](migrations/) |
+| Containers | Multi-stage builds whose images run as non-root users, checked by `hadolint`. The API image is 10.2 MB. Compose runs nine services, and SQL Server, the database setup and the migrations come up first, in order, by their health checks. | [`app/Dockerfile`](app/Dockerfile), [`web/Dockerfile`](web/Dockerfile), [`compose.yaml`](compose.yaml) |
+| Continuous integration | Every pull request runs the lint (shellcheck, hadolint, go vet, actionlint, gitleaks, promtool, amtool), the tests, and both image builds with a trivy scan that stops on a critical finding. `main` only changes through a pull request with all three checks green. | [`ci.yml`](.github/workflows/ci.yml), [`.github/rulesets/`](.github/rulesets/) |
+| AWS and Terraform | A VPC with a public subnet, a security group that lets in only port 80, and an EC2 server with no SSH and no keys on it: Systems Manager is the way in, and its role gets short-lived credentials to pull the images and read its own parameters. Terraform keeps its state in S3 with a lock file, and a pull request that touches `infra/` runs `fmt`, `validate` and tflint. | [`infra/`](infra/) |
+| Delivery | After a merge, the images go to ECR, with AWS access through OIDC and no stored keys. An approved deploy runs `deploy.sh` on the server through Run Command, checks `/api/patients` through nginx, and puts the last good release back by itself when the check fails. | [`deploy/deploy.sh`](deploy/deploy.sh), [the runbook](docs/runbooks/deploy-and-rollback.md) |
+| Monitoring | Prometheus collects the metrics of the API and the worker, a Grafana dashboard is stored as code, and two alert rules with unit tests go through Alertmanager to Discord, each with a link to its runbook. | [`observability/`](observability/), [`docs/observability.md`](docs/observability.md) |
+
+## In numbers
+
+Measured, each with its method in [`docs/results.md`](docs/results.md):
+
+| What | Result |
+|---|---|
+| API image | 10.2 MB packed; the first, naive build was 346 MB |
+| CI on a pull request | 1 min 8 s for the lint, the tests, two image builds and the scan |
+| Deploy, from the approval to a healthy release | 53 s |
+| Automatic rollback, from the failed check to the old release answering | 30 s |
+| Dev environment with Terraform: the network, the role and the server | 12 resources, `apply` and `destroy` in 32 s each |
+| Alert after the API stops | in Discord about 2 minutes later |
+
+## See it running
+
+Nothing runs on AWS between work sessions: the dev environment is built with Terraform when it's needed and destroyed afterwards, so there's no address to visit. These are from the real stack and the real pipeline.
+
+**The dashboard during a drill.** The API was stopped until `APIDown` fired, about a minute and a half (the gap in requests per second). Then SQL Server was stopped for seven minutes during a loop of requests: every request waited about 4 seconds for its error, so the rate fell, the share of 5xx went to 100% and p95 to about 4.8 seconds, and `HighErrorRate` fired. Everything went back to normal once SQL Server was started again.
+
+![The PatientPing dashboard in Grafana during a drill: a gap in the requests while the API was stopped, then the share of 5xx at 100% and p95 at about 4.8 seconds while SQL Server was stopped](docs/images/grafana-dashboard.png)
+
+**An alert firing.** With the API stopped, Prometheus's alerts page shows `APIDown` firing, and Alertmanager holds it for the Discord receiver, with the labels that say where and how bad.
+
+![Prometheus's alerts page with APIDown firing and HighErrorRate inactive, and Alertmanager with the APIDown alert routed to the receiver discord](docs/images/alerting.png)
+
+**What arrives in Discord.** From the same drill: each alert's `FIRING` message says what is broken, how bad it is, a sentence in plain words and the runbook to open, and its `RESOLVED` message comes by itself when the alert ends.
+
+![The four Discord messages from the drill: FIRING and RESOLVED for APIDown, then FIRING and RESOLVED for HighErrorRate, each with its labels, summary and runbook link](docs/images/discord-alerts.png)
+
+**A deploy through the pipeline.** [The first one](https://github.com/FarisOmerbasic/patientping/actions/runs/42703562305): `lint` and `test`, then `build`, `image` and `deploy`, which waited for an approval in the environment `production`.
+
+![The GitHub Actions run of the first pipeline deploy: lint and test, then build, image and deploy, all green, and the approval for production](docs/images/pipeline-run.png)
+
+[The rollback drill](https://github.com/FarisOmerbasic/patientping/actions/runs/42877906688) deployed a release with a wrong port in `nginx.conf` on purpose. Its `deploy` job is red: `deploy.sh` put the last good release back in 30 seconds and still reported the failure. The logs of both runs need a GitHub sign-in.
+
+A live demo takes about two minutes to bring up: `terraform apply` (32 s) and an approved deploy (53 s).
+
+## How the Compose stack fits together
 
 ```mermaid
 flowchart LR

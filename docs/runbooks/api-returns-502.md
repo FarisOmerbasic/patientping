@@ -17,12 +17,12 @@ The front page loads, but every request under `/api/` gets nginx's `502 Bad Gate
 ## Likely causes and fixes
 | Cause | How to confirm | Fix |
 |---|---|---|
-| The `api` container is on no network (seen on Day 20, after `docker network disconnect`) | PORTS empty in `ps -a`, `"Networks": {}` in check 4, `api could not be resolved` in nginx's log | `docker compose up -d`: Compose makes the container again on its network. `docker compose restart api` doesn't help, because the same container still has no network |
+| The `api` container is on no network (seen in a drill, after `docker network disconnect`) | PORTS empty in `ps -a`, `"Networks": {}` in check 4, `api could not be resolved` in nginx's log | `docker compose up -d`: Compose makes the container again on its network. `docker compose restart api` doesn't help, because the same container still has no network |
 | The `api` container is stopped or missing | `ps -a` shows `api` `Exited` or no `api` line, and nginx logs `api could not be resolved` | `docker compose logs --tail 20 api` for why it ended, then `docker compose up -d` |
-| The API listens on another port than 8080 (seen on Day 19 in the diner) | nginx logs `connect() failed (111: Connection refused)` with the upstream's port | put the port in `compose.yaml` and `nginx.conf` back in line, then `docker compose up -d` |
+| The API listens on another port than 8080 (seen in a lab) | nginx logs `connect() failed (111: Connection refused)` with the upstream's port | put the port in `compose.yaml` and `nginx.conf` back in line, then `docker compose up -d` |
 
 ## Escalation / rollback
 `docker compose up -d` gets the page back fastest. It makes again any container that doesn't match `compose.yaml`, and leaves the rest running. Check with the `curl` from quick check 2. Find the cause before or right after, or it comes back: the old container is gone after `up -d`, and its evidence with it.
 
 ## Prevention
-`docker compose logs web | grep error` showed the cause at once, while every health check said `(healthy)`. Later, an alert that asks `/api/patients` through nginx every minute, or that counts nginx's 5xx answers, would catch it before a clinic calls (Day 43).
+`docker compose logs web | grep error` showed the cause at once, while every health check said `(healthy)`. `APIDown` now catches all three causes above, because in each one Prometheus can't fetch `api:8080/metrics` either. A wrong upstream port in `nginx.conf` alone would still go unnoticed, since the API itself answers: an alert on nginx's own 5xx answers, or one that asks `/api/patients` through nginx every minute, would catch that.

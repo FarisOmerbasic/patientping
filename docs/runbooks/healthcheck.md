@@ -51,7 +51,7 @@ Setup: a healthy target on port 8080 (`docker run -d --name web -p 8080:80 nginx
 | `scripts/healthcheck.sh -r abc http://localhost:8080; echo "exit=$?"` | `healthcheck.sh: retries must be a whole number of 1 or more: abc`, `exit=2` |
 | `scripts/healthcheck.sh -t abc -r 1 http://localhost:8080; echo "exit=$?"` | `healthcheck.sh: timeout must be a whole number of 1 or more: abc`, `exit=2` |
 
-256 dead URLs. Exit codes only go from 0 to 255, so before Day 6, 256 failures came out as `exit=0`:
+256 dead URLs. Exit codes only go from 0 to 255, so when the script still exited with the number of failures, 256 failures came out as `exit=0`:
 
 ```
 urls=(); for i in $(seq 1 256); do urls+=("http://localhost:9"); done

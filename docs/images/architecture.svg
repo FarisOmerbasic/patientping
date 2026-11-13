@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title>PatientPing architecture</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#545B64"/>
+    </marker>
+    <!-- Glyphs: white line drawings on a 56 x 56 grid, placed on a coloured square. -->
+    <symbol id="g-bucket" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"><ellipse cx="28" cy="17" rx="15" ry="5"/><path d="M13 17 L17 40 Q28 46 39 40 L43 17"/></g></symbol>
+    <symbol id="g-lock" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6"><rect x="16" y="25" width="24" height="18" rx="2"/><path d="M21 25 v-5 a7 7 0 0 1 14 0 v5"/></g><circle cx="28" cy="34" r="2.6" fill="#fff"/></symbol>
+    <symbol id="g-stack" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"><rect x="13" y="12" width="30" height="9" rx="1"/><rect x="13" y="24" width="30" height="9" rx="1"/><rect x="13" y="36" width="30" height="9" rx="1"/></g></symbol>
+    <symbol id="g-gear" viewBox="0 0 56 56"><g stroke="#fff" stroke-width="4.5" stroke-linecap="round"><line x1="28" y1="11" x2="28" y2="15"/><line x1="28" y1="41" x2="28" y2="45"/><line x1="11" y1="28" x2="15" y2="28"/><line x1="41" y1="28" x2="45" y2="28"/><line x1="16" y1="16" x2="19" y2="19"/><line x1="37" y1="37" x2="40" y2="40"/><line x1="16" y1="40" x2="19" y2="37"/><line x1="37" y1="19" x2="40" y2="16"/></g><circle cx="28" cy="28" r="10" fill="none" stroke="#fff" stroke-width="3"/><circle cx="28" cy="28" r="3.5" fill="#fff"/></symbol>
+    <symbol id="g-key" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="19" cy="28" r="7"/><path d="M26 28 H44 M38 28 v6 M43 28 v5"/></g></symbol>
+    <symbol id="g-chip" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6"><rect x="17" y="17" width="22" height="22" rx="1"/><path d="M22 17 v-5 M28 17 v-5 M34 17 v-5 M22 39 v5 M28 39 v5 M34 39 v5 M17 22 h-5 M17 28 h-5 M17 34 h-5 M39 22 h5 M39 28 h5 M39 34 h5"/></g></symbol>
+    <symbol id="g-gateway" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="32" height="28" rx="3"/><path d="M20 28 H36 M31 23 L36 28 L31 33"/></g></symbol>
+    <symbol id="g-person" viewBox="0 0 56 56"><circle cx="28" cy="18" r="8" fill="#fff"/><path d="M12 46 a16 14 0 0 1 32 0 z" fill="#fff"/></symbol>
+    <symbol id="g-people" viewBox="0 0 56 56"><circle cx="20" cy="19" r="6.5" fill="#fff"/><path d="M7 43 a13 12 0 0 1 26 0 z" fill="#fff"/><circle cx="36" cy="19" r="6.5" fill="#fff"/><path d="M23 43 a13 12 0 0 1 26 0 z" fill="#fff"/></symbol>
+    <symbol id="g-branch" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6"><circle cx="19" cy="15" r="4"/><circle cx="19" cy="41" r="4"/><circle cx="37" cy="21" r="4"/><path d="M19 19 V37 M37 25 c0 9 -18 6 -18 12"/></g></symbol>
+    <symbol id="g-terraform" viewBox="0 0 56 56"><g fill="#fff"><path d="M21 13 l11 6.3 v12.6 l-11 -6.3 z"/><path d="M33.5 19.3 l11 -6.3 v12.6 l-11 6.3 z"/><path d="M8.5 6 l11 6.3 v12.6 l-11 -6.3 z"/><path d="M21 27.5 l11 6.3 v12.6 l-11 -6.3 z"/></g></symbol>
+    <symbol id="g-docker" viewBox="0 0 56 56"><g fill="#fff"><rect x="12" y="22" width="7" height="7"/><rect x="21" y="22" width="7" height="7"/><rect x="30" y="22" width="7" height="7"/><rect x="21" y="13" width="7" height="7"/><rect x="30" y="13" width="7" height="7"/><path d="M8 32 H46 c0 9 -9 14 -20 14 c-10 0 -16 -5 -18 -14 z"/></g></symbol>
+    <symbol id="g-chat" viewBox="0 0 56 56"><path d="M12 14 H44 a3 3 0 0 1 3 3 V35 a3 3 0 0 1 -3 3 H24 L15 45 V38 H12 a3 3 0 0 1 -3 -3 V17 a3 3 0 0 1 3 -3 z" fill="#fff"/><circle cx="21" cy="26" r="2.8" fill="#5865F2"/><circle cx="35" cy="26" r="2.8" fill="#5865F2"/></symbol>
+    <symbol id="g-laptop" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"><rect x="13" y="14" width="30" height="20" rx="2"/><path d="M8 40 H48 L45 34 H11 z"/></g></symbol>
+    <symbol id="g-flag" viewBox="0 0 56 56"><g fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"><path d="M16 46 V10"/><path d="M16 12 H40 L35 20 L40 28 H16"/></g></symbol>
+    <symbol id="g-cloud" viewBox="0 0 56 56"><path d="M16 40 a9 9 0 0 1 1 -18 a12 12 0 0 1 23 3 a8 8 0 0 1 0 15 z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></symbol>
+  </defs>
+
+  <rect width="1800" height="1250" fill="#ffffff"/>
+
+  <!-- ===================== Laptop ===================== -->
+  <rect x="20" y="20" width="560" height="930" rx="6" fill="#FAFAFA" stroke="#545B64" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="20" y="20" width="34" height="34" rx="4" fill="#545B64"/><use href="#g-laptop" x="20" y="20" width="34" height="34"/>
+  <text x="64" y="43" font-size="15" font-weight="bold" fill="#232F3E">Laptop: WSL 2 Ubuntu, Docker Desktop</text>
+
+  <rect x="44" y="91" width="48" height="48" rx="6" fill="#545B64"/><use href="#g-person" x="44" y="91" width="48" height="48"/>
+  <text x="104" y="110" font-size="13" font-weight="bold" fill="#232F3E">Developer</text>
+  <text x="104" y="128" font-size="12" fill="#545B64">VS Code, git, make</text>
+
+  <rect x="44" y="190" width="290" height="80" rx="5" fill="#ffffff" stroke="#879196"/>
+  <rect x="44" y="190" width="6" height="80" rx="2" fill="#24292F"/>
+  <text x="62" y="213" font-size="13" font-weight="bold" fill="#232F3E">Before a push</text>
+  <text x="62" y="233" font-size="12" fill="#545B64">make ci: the same checks as CI</text>
+  <text x="62" y="252" font-size="12" fill="#545B64">pre-commit hook: gitleaks, shellcheck</text>
+
+  <rect x="320" y="323" width="240" height="70" rx="5" fill="#ffffff" stroke="#879196"/>
+  <rect x="332" y="337" width="42" height="42" rx="5" fill="#7B42BC"/><use href="#g-terraform" x="332" y="337" width="42" height="42"/>
+  <text x="384" y="353" font-size="13" font-weight="bold" fill="#232F3E">Terraform, AWS CLI</text>
+  <text x="384" y="371" font-size="12" fill="#545B64">plan and apply infra/</text>
+
+  <!-- Local Compose stack -->
+  <rect x="40" y="430" width="520" height="460" rx="6" fill="#F4F9FF" stroke="#2496ED" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="40" y="430" width="30" height="30" rx="4" fill="#2496ED"/><use href="#g-docker" x="40" y="430" width="30" height="30"/>
+  <text x="80" y="451" font-size="13" font-weight="bold" fill="#1D63ED">Docker Compose: the whole stack with make up</text>
+
+  <!-- service boxes: white, with a coloured stripe for the technology -->
+  <g font-size="12">
+    <rect x="60" y="480" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="60" y="480" width="6" height="56" rx="2" fill="#009639"/>
+    <text x="76" y="503" font-weight="bold" fill="#232F3E">web</text><text x="76" y="521" fill="#545B64">nginx, :8080</text>
+    <rect x="230" y="480" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="230" y="480" width="6" height="56" rx="2" fill="#00ADD8"/>
+    <text x="246" y="503" font-weight="bold" fill="#232F3E">api</text><text x="246" y="521" fill="#545B64">Go</text>
+    <rect x="230" y="570" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="230" y="570" width="6" height="56" rx="2" fill="#00ADD8"/>
+    <text x="246" y="593" font-weight="bold" fill="#232F3E">worker</text><text x="246" y="611" fill="#545B64">Go, reminders</text>
+    <rect x="400" y="570" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="400" y="570" width="6" height="56" rx="2" fill="#CC2927"/>
+    <text x="416" y="593" font-weight="bold" fill="#232F3E">mssql</text><text x="416" y="611" fill="#545B64">SQL Server</text>
+    <rect x="400" y="660" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="400" y="660" width="6" height="56" rx="2" fill="#CC2927"/>
+    <text x="416" y="683" font-weight="bold" fill="#232F3E">db-init, migrate</text><text x="416" y="701" fill="#545B64">run once</text>
+    <rect x="60" y="800" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="60" y="800" width="6" height="56" rx="2" fill="#F46800"/>
+    <text x="76" y="823" font-weight="bold" fill="#232F3E">grafana</text><text x="76" y="841" fill="#545B64">:3000, dashboard</text>
+    <rect x="230" y="800" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="230" y="800" width="6" height="56" rx="2" fill="#E6522C"/>
+    <text x="246" y="823" font-weight="bold" fill="#232F3E">prometheus</text><text x="246" y="841" fill="#545B64">:9090, alert rules</text>
+    <rect x="400" y="800" width="140" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="400" y="800" width="6" height="56" rx="2" fill="#E6522C"/>
+    <text x="416" y="823" font-weight="bold" fill="#232F3E">alertmanager</text><text x="416" y="841" fill="#545B64">:9093</text>
+  </g>
+
+  <g fill="none" stroke="#545B64" stroke-width="1.6">
+    <path d="M200 508 H228" marker-end="url(#arrow)"/>
+    <path d="M370 508 H470 V568" marker-end="url(#arrow)"/>
+    <path d="M370 598 H398" marker-end="url(#arrow)"/>
+    <path d="M470 660 V628" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+    <path d="M300 800 V628" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+    <path d="M240 800 V770 H215 V530 H228" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+    <path d="M200 828 H228" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+    <path d="M370 828 H398" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+    <path d="M470 856 V988" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  </g>
+  <text x="308" y="740" font-size="11" fill="#545B64">/metrics every 15 s</text>
+
+  <!-- Discord -->
+  <rect x="380" y="990" width="200" height="64" rx="5" fill="#ffffff" stroke="#879196"/>
+  <rect x="392" y="1001" width="42" height="42" rx="5" fill="#5865F2"/><use href="#g-chat" x="392" y="1001" width="42" height="42"/>
+  <text x="444" y="1018" font-size="13" font-weight="bold" fill="#232F3E">Discord channel</text>
+  <text x="444" y="1036" font-size="12" fill="#545B64">FIRING, RESOLVED</text>
+
+  <!-- ===================== GitHub ===================== -->
+  <rect x="620" y="20" width="1160" height="180" rx="6" fill="#F6F8FA" stroke="#24292F" stroke-width="1.5"/>
+  <rect x="620" y="20" width="34" height="34" rx="4" fill="#24292F"/><use href="#g-branch" x="620" y="20" width="34" height="34"/>
+  <text x="664" y="43" font-size="15" font-weight="bold" fill="#24292F">GitHub: FarisOmerbasic/patientping, main protected by a ruleset</text>
+
+  <g font-size="12">
+    <rect x="650" y="80" width="210" height="70" rx="5" fill="#fff" stroke="#24292F"/>
+    <text x="664" y="108" font-size="13" font-weight="bold" fill="#24292F">ci, on a pull request</text>
+    <text x="664" y="127" fill="#545B64">lint, test, build, trivy scan</text>
+    <rect x="890" y="80" width="300" height="70" rx="5" fill="#fff" stroke="#24292F"/>
+    <text x="904" y="108" font-size="13" font-weight="bold" fill="#24292F">image, after the merge to main</text>
+    <text x="904" y="127" fill="#545B64">build, scan, push sha-&lt;commit&gt;</text>
+    <rect x="1310" y="80" width="300" height="70" rx="5" fill="#fff" stroke="#24292F"/>
+    <text x="1324" y="108" font-size="13" font-weight="bold" fill="#24292F">deploy, if a dev server runs</text>
+    <text x="1324" y="127" fill="#545B64">after an approval in production</text>
+  </g>
+  <g fill="none" stroke="#545B64" stroke-width="1.6">
+    <path d="M860 115 H888" marker-end="url(#arrow)"/>
+    <path d="M1190 115 H1308" marker-end="url(#arrow)"/>
+  </g>
+  <text x="1210" y="107" font-size="11" fill="#545B64">server up?</text>
+
+  <!-- git push from the laptop -->
+  <path d="M270 115 H648" fill="none" stroke="#545B64" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="400" y="106" font-size="12" fill="#545B64">git push, pull request</text>
+
+  <!-- ===================== AWS ===================== -->
+  <rect x="620" y="240" width="1160" height="910" fill="none" stroke="#232F3E" stroke-width="1.6"/>
+  <rect x="620" y="240" width="34" height="30" fill="#232F3E"/>
+  <text x="637" y="260" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">aws</text>
+  <text x="664" y="261" font-size="14" fill="#232F3E">AWS Cloud</text>
+
+  <rect x="640" y="280" width="1120" height="850" fill="none" stroke="#00A4A6" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <rect x="640" y="280" width="28" height="28" fill="#00A4A6"/><use href="#g-flag" x="640" y="280" width="28" height="28"/>
+  <text x="676" y="299" font-size="13" fill="#147EBA">Region us-east-1</text>
+
+  <!-- regional services: icon, label on the right -->
+  <g font-size="12">
+    <rect x="670" y="330" width="56" height="56" rx="6" fill="#7AA116"/><use href="#g-bucket" x="670" y="330" width="56" height="56"/>
+    <text x="734" y="345" font-weight="bold" fill="#232F3E">Amazon S3</text><text x="734" y="362" fill="#545B64">Terraform state</text><text x="734" y="378" fill="#545B64">and lock file</text>
+
+    <rect x="894" y="330" width="56" height="56" rx="6" fill="#DD344C"/><use href="#g-lock" x="894" y="330" width="56" height="56"/>
+    <text x="958" y="345" font-weight="bold" fill="#232F3E">IAM and STS</text><text x="958" y="362" fill="#545B64">OIDC for GitHub,</text><text x="958" y="378" fill="#545B64">gha-patientping-ci</text>
+
+    <rect x="1118" y="330" width="56" height="56" rx="6" fill="#ED7100"/><use href="#g-stack" x="1118" y="330" width="56" height="56"/>
+    <text x="1182" y="345" font-weight="bold" fill="#232F3E">Amazon ECR</text><text x="1182" y="362" fill="#545B64">patientping-api</text><text x="1182" y="378" fill="#545B64">patientping-web</text>
+
+    <rect x="1342" y="330" width="56" height="56" rx="6" fill="#E7157B"/><use href="#g-gear" x="1342" y="330" width="56" height="56"/>
+    <text x="1406" y="345" font-weight="bold" fill="#232F3E">Systems Manager</text><text x="1406" y="362" fill="#545B64">Run Command,</text><text x="1406" y="378" fill="#545B64">Session Manager</text>
+
+    <rect x="1566" y="330" width="56" height="56" rx="6" fill="#E7157B"/><use href="#g-key" x="1566" y="330" width="56" height="56"/>
+    <text x="1630" y="345" font-weight="bold" fill="#232F3E">Parameter Store</text><text x="1630" y="362" fill="#545B64">/patientping/dev/*</text><text x="1630" y="378" fill="#545B64">SecureString</text>
+  </g>
+
+  <!-- VPC, subnet, security group, instance -->
+  <rect x="680" y="470" width="1060" height="620" fill="none" stroke="#8C4FFF" stroke-width="1.6"/>
+  <rect x="680" y="470" width="28" height="28" fill="#8C4FFF"/><use href="#g-cloud" x="680" y="470" width="28" height="28"/>
+  <text x="716" y="489" font-size="13" fill="#232F3E">VPC pp-dev, 10.20.0.0/16</text>
+
+  <rect x="720" y="520" width="990" height="540" fill="#F2F6E8" stroke="#7AA116" stroke-width="1.4"/>
+  <rect x="720" y="520" width="28" height="28" fill="#7AA116"/><use href="#g-lock" x="720" y="520" width="28" height="28"/>
+  <text x="756" y="539" font-size="13" fill="#248814">Public subnet 10.20.1.0/24, us-east-1a</text>
+
+  <rect x="760" y="570" width="920" height="460" fill="none" stroke="#DD344C" stroke-width="1.4"/>
+  <text x="772" y="590" font-size="13" fill="#DD344C">Security group pp-web: only TCP 80 in</text>
+
+  <rect x="800" y="620" width="850" height="380" fill="#ffffff" stroke="#ED7100" stroke-width="1.4"/>
+  <rect x="800" y="620" width="28" height="28" fill="#ED7100"/><use href="#g-chip" x="800" y="620" width="28" height="28"/>
+
+  <rect x="830" y="670" width="470" height="310" rx="6" fill="#F4F9FF" stroke="#2496ED" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <rect x="830" y="670" width="26" height="26" rx="4" fill="#2496ED"/><use href="#g-docker" x="830" y="670" width="26" height="26"/>
+  <text x="864" y="688" font-size="12" font-weight="bold" fill="#1D63ED">Docker Compose: compose.prod.yml</text>
+
+  <g font-size="12">
+    <rect x="1000" y="720" width="110" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="1000" y="720" width="6" height="56" rx="2" fill="#00ADD8"/>
+    <text x="1016" y="743" font-weight="bold" fill="#232F3E">api</text><text x="1016" y="761" fill="#545B64">Go</text>
+    <rect x="1000" y="810" width="110" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="1000" y="810" width="6" height="56" rx="2" fill="#00ADD8"/>
+    <text x="1016" y="833" font-weight="bold" fill="#232F3E">worker</text><text x="1016" y="851" fill="#545B64">Go</text>
+    <rect x="1130" y="810" width="150" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="1130" y="810" width="6" height="56" rx="2" fill="#CC2927"/>
+    <text x="1146" y="833" font-weight="bold" fill="#232F3E">mssql</text><text x="1146" y="851" fill="#545B64">SQL Server</text>
+    <rect x="1130" y="900" width="150" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="1130" y="900" width="6" height="56" rx="2" fill="#CC2927"/>
+    <text x="1146" y="923" font-weight="bold" fill="#232F3E">db-init, migrate</text><text x="1146" y="941" fill="#545B64">run once</text>
+    <rect x="850" y="900" width="130" height="56" rx="4" fill="#fff" stroke="#879196"/><rect x="850" y="900" width="6" height="56" rx="2" fill="#009639"/>
+    <text x="866" y="923" font-weight="bold" fill="#232F3E">web</text><text x="866" y="941" fill="#545B64">nginx, port 80</text>
+  </g>
+  <g fill="none" stroke="#545B64" stroke-width="1.6">
+    <path d="M915 900 V748 H998" marker-end="url(#arrow)"/>
+    <path d="M1110 748 H1205 V808" marker-end="url(#arrow)"/>
+    <path d="M1110 838 H1128" marker-end="url(#arrow)"/>
+    <path d="M1205 900 V868" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- deploy.sh on the instance -->
+  <rect x="1340" y="680" width="290" height="150" rx="5" fill="#fff" stroke="#879196"/>
+  <rect x="1340" y="680" width="6" height="150" rx="2" fill="#4EAA25"/>
+  <g font-size="12" fill="#545B64">
+    <text x="1356" y="704" font-size="13" font-weight="bold" fill="#232F3E">deploy.sh, run by the SSM agent</text>
+    <text x="1356" y="728">fetches the release, logs in to ECR</text>
+    <text x="1356" y="748">writes .env from Parameter Store</text>
+    <text x="1356" y="768">compose up, then checks /api/patients</text>
+    <text x="1356" y="788">a failed check puts the last</text>
+    <text x="1356" y="808">good release back</text>
+  </g>
+  <path d="M1340 760 H1302" fill="none" stroke="#545B64" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- arrows from GitHub to AWS, and inside AWS -->
+  <g fill="none" stroke="#545B64" stroke-width="1.6">
+    <path d="M922 150 V328" marker-end="url(#arrow)"/>
+    <path d="M1146 150 V328" marker-end="url(#arrow)"/>
+    <path d="M1370 150 V328" marker-end="url(#arrow)"/>
+    <path d="M1370 386 V678" marker-end="url(#arrow)"/>
+    <path d="M1594 386 V678" marker-end="url(#arrow)"/>
+    <path d="M1146 386 V668" marker-end="url(#arrow)"/>
+    <path d="M560 358 H668" marker-end="url(#arrow)"/>
+  </g>
+  <!-- drawn after the arrows, so the label sits on top of the line from ECR -->
+  <rect x="833" y="626" width="430" height="19" fill="#ffffff"/>
+  <text x="836" y="639" font-size="13" fill="#D45B07">EC2 patientping-dev: c7i-flex.large, Amazon Linux 2023, role pp-ec2-ssm</text>
+
+  <!-- internet gateway and users -->
+  <rect x="891" y="1066" width="48" height="48" rx="6" fill="#8C4FFF"/><use href="#g-gateway" x="891" y="1066" width="48" height="48"/>
+  <rect x="770" y="1081" width="114" height="18" fill="#ffffff"/>
+  <text x="882" y="1095" font-size="12" fill="#232F3E" text-anchor="end">Internet gateway</text>
+  <rect x="891" y="1186" width="48" height="48" rx="6" fill="#545B64"/><use href="#g-people" x="891" y="1186" width="48" height="48"/>
+  <text x="950" y="1215" font-size="13" font-weight="bold" fill="#232F3E">Users</text>
+  <g fill="none" stroke="#545B64" stroke-width="1.6">
+    <path d="M915 1186 V1116" marker-end="url(#arrow)"/>
+    <path d="M915 1066 V958" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- numbered steps -->
+  <g font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">
+    <rect x="636" y="68" width="24" height="24" rx="4" fill="#147EBA"/><text x="648" y="85">1</text>
+    <rect x="930" y="248" width="24" height="24" rx="4" fill="#147EBA"/><text x="942" y="265">2</text>
+    <rect x="1154" y="248" width="24" height="24" rx="4" fill="#147EBA"/><text x="1166" y="265">3</text>
+    <rect x="1378" y="248" width="24" height="24" rx="4" fill="#147EBA"/><text x="1390" y="265">4</text>
+    <rect x="1378" y="430" width="24" height="24" rx="4" fill="#147EBA"/><text x="1390" y="447">5</text>
+    <rect x="1602" y="430" width="24" height="24" rx="4" fill="#147EBA"/><text x="1614" y="447">6</text>
+    <rect x="1154" y="430" width="24" height="24" rx="4" fill="#147EBA"/><text x="1166" y="447">7</text>
+    <rect x="925" y="1150" width="24" height="24" rx="4" fill="#147EBA"/><text x="937" y="1167">8</text>
+    <rect x="590" y="322" width="24" height="24" rx="4" fill="#147EBA"/><text x="602" y="339">9</text>
+    <rect x="478" y="900" width="24" height="24" rx="4" fill="#147EBA"/><text x="490" y="917">10</text>
+  </g>
+  <g font-size="11" fill="#545B64">
+    <text x="962" y="265">assume role (OIDC)</text>
+    <text x="1186" y="265">push images</text>
+    <text x="1410" y="265">send-command</text>
+    <text x="1410" y="447">runs deploy.sh</text>
+    <text x="1634" y="447">passwords</text>
+    <text x="1186" y="447">pull images</text>
+    <text x="957" y="1167">HTTP, port 80</text>
+    <text x="512" y="917">webhook</text>
+  </g>
+</svg>
