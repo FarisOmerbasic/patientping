@@ -153,7 +153,7 @@ aws iam simulate-principal-policy \
 
 ## `gha-patientping-ci-deploy.json`
 
-What the role `gha-patientping-ci` may do to deploy, added on Day 38 for the `deploy` job. It's a second inline policy on the same role, `gha-patientping-deploy`.
+What the role `gha-patientping-ci` may do to deploy, added for the `deploy` job. It's a second inline policy on the same role, `gha-patientping-deploy`. The `image` job uses its `ec2:DescribeInstances` too: it looks for a running server tagged `patientping-dev`, and `deploy` is skipped when there is none.
 
 | Statement | Allows | On |
 |---|---|---|
