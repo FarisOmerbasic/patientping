@@ -1,0 +1,69 @@
+# Unit tests for alerts.yml. promtool feeds the made-up series below to the
+# rules and checks which alerts fire at each time. `make lint` runs them.
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 15s
+
+tests:
+  # APIDown waits a whole minute: pending first, firing after.
+  - interval: 15s
+    input_series:
+      - series: 'up{job="api", instance="api:8080"}'
+        values: '1 1 0x10'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: APIDown
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: APIDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: api
+              instance: api:8080
+            exp_annotations:
+              summary: "Prometheus can't fetch /metrics from the API"
+              runbook_url: "https://github.com/FarisOmerbasic/patientping/blob/main/docs/runbooks/api-down.md"
+
+  # A blip of 30 seconds, like a restart during a deploy, wakes nobody.
+  - interval: 15s
+    input_series:
+      - series: 'up{job="api", instance="api:8080"}'
+        values: '1 1 0 0 1x8'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: APIDown
+        exp_alerts: []
+
+  # A quiet hour: one patient request every 2 minutes, and every one fails,
+  # while Prometheus's fetches and the health checks keep answering 200.
+  - interval: 15s
+    input_series:
+      - series: 'http_requests_total{route="/api/patients", method="GET", code="500"}'
+        values: '0+0.125x120'
+      - series: 'http_requests_total{route="/metrics", method="GET", code="200"}'
+        values: '0+1x120'
+      - series: 'http_requests_total{route="/healthz", method="GET", code="200"}'
+        values: '0+1.5x120'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "More than 5% of the requests to /api/ get a 5xx"
+              runbook_url: "https://github.com/FarisOmerbasic/patientping/blob/main/docs/runbooks/api-down.md#high-error-rate"
+
+  # A busy hour with 2% errors stays under the threshold.
+  - interval: 15s
+    input_series:
+      - series: 'http_requests_total{route="/api/patients", method="GET", code="200"}'
+        values: '0+49x120'
+      - series: 'http_requests_total{route="/api/patients", method="GET", code="500"}'
+        values: '0+1x120'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: HighErrorRate
+        exp_alerts: []
