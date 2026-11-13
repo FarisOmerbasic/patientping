@@ -5,7 +5,7 @@
 
 ## Context
 
-The dev network and the server were first built by hand with the AWS CLI (Days 29 and 30), from a command log on the laptop. That worked, but:
+The dev network and the server were first built by hand with the AWS CLI, from a command log on the laptop. That worked, but:
 
 - The nine creates for the network had to run in the right order, and each ID lived in a shell variable that was gone once the terminal closed.
 - Taking it apart meant thirteen deletes in reverse order by hand: seven for the network, six for the server and its role.
@@ -24,7 +24,7 @@ The dev network and the server were first built by hand with the AWS CLI (Days 2
 A mix, each for what it's best at:
 
 - **Terraform** for everything that gets built: the network, the instance role and the server (`infra/envs/dev`), the ECR repositories (`infra/shared`) and the state bucket (`infra/bootstrap`).
-- **The AWS CLI** for reading and checking (the `describe` lines, `/aws-cost-check`), and for the secrets. From Day 36, a password is typed into a prompt and stored with `aws ssm put-parameter`, so its value never passes through Terraform's files or its state.
+- **The AWS CLI** for reading and checking (the `describe` lines, `/aws-cost-check`), and for the secrets. A password is typed into a prompt and stored with `aws ssm put-parameter`, so its value never passes through Terraform's files or its state.
 - **AWS Systems Manager Parameter Store** keeps the secrets, and the server reads them with its own role.
 
 No CloudFormation: one tool for what gets built, and it can cover the Azure parts too.

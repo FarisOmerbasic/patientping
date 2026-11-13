@@ -18,7 +18,7 @@ PatientPing lets clinics store patients and appointments, and a worker sends rem
 
 ## Decision
 We chose the standard library, because it needs no extra dependency.
-We chose the in-memory store behind a `Store` interface, because it runs anywhere now, and on Day 17 SQL Server takes its place without changing the handlers.
+We chose the in-memory store behind a `Store` interface, because it runs anywhere now, and SQL Server can take its place later without changing the handlers.
 
 ## Spec
 
@@ -47,8 +47,8 @@ We chose the in-memory store behind a `Store` interface, because it runs anywher
 | Method | Path | What it does | Answers |
 |---|---|---|---|
 | GET | /healthz | says the process is alive | 200 |
-| GET | /readyz | says the API can serve requests now | 200; 503 when not ready (the database check comes on Day 17) |
-| GET | /version | says which version is running (`dev` until Day 26) | 200 |
+| GET | /readyz | says the API can serve requests now | 200; 503 when not ready (the database check came with SQL Server) |
+| GET | /version | says which version is running (`dev` until the build passes the version in) | 200 |
 | GET | /api/patients | lists all patients | 200 with a JSON list |
 | POST | /api/patients | adds a patient | 201 with the new patient; 400 if the JSON is broken, the name is missing, or both phone and email are empty |
 | GET | /api/appointments | lists all appointments | 200 with a JSON list |
@@ -67,6 +67,6 @@ One JSON object per line. The line the API writes when it starts:
 
 ## Consequences
 - Easier: the API builds and its tests run on any machine with Go, with no database.
-- Harder: all data is lost on every restart until Day 17.
-- Follow-up: Day 17 adds SQL Server as a second implementation of the same interface.
+- Harder: all data is lost on every restart, until SQL Server replaces the in-memory store.
+- Follow-up: SQL Server as a second implementation of the same interface.
 - Settings are added when they're needed, not in advance.
