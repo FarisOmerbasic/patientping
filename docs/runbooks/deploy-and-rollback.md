@@ -7,9 +7,9 @@
 
 ## A normal deploy
 
-A **merge** to `main` starts it. A pull request on its own only runs `lint`, `test` and `build`: its `image` and `deploy` jobs are skipped. The run on `main` then runs `image`, which pushes both images to ECR as `sha-<commit>`, and `deploy` waits in the environment `production` for an approval. That takes about 2 minutes from the merge.
+A **merge** to `main` starts it. A pull request on its own only runs `lint`, `test` and `build`: its `image` and `deploy` jobs are skipped. The run on `main` then runs `image`, which pushes both images to ECR as `sha-<commit>` and looks for a running server tagged `patientping-dev`. When one runs, `deploy` waits in the environment `production` for an approval, about 2 minutes after the merge. When none runs, `deploy` is skipped, the run stays green, and the `image` job's last step says `no dev server runs, so deploy is skipped`.
 
-1. On the run's page: *Review deployments*, tick `production`, *Approve and deploy*. Approve only while a server runs. With no server, *Reject*: a waiting deploy counts as running, and every later run on `main` queues behind it.
+1. On the run's page: *Review deployments*, tick `production`, *Approve and deploy*. If the server was destroyed after the run started, *Reject*: a waiting deploy counts as running, and every later run on `main` queues behind it.
 2. The job finds the server by its `Name` tag, sends `deploy.sh sha-<commit>` to it through Run Command, waits for the result, and runs a smoke test from GitHub's runner.
 3. It worked when the run is green, and the deploy log has `deploy.sh: sha-<commit> deployed and healthy` and the smoke test's `200`. From the laptop, with the address from the log's `server:` line (or `terraform output -raw public_ip` in `infra/envs/dev`):
 
@@ -31,7 +31,7 @@ For the cases the automatic rollback doesn't cover: a fresh server has no `CURRE
    aws ecr describe-images --profile pp-readonly --repository-name patientping-api --image-ids imageTag="sha-$SHA" --query 'imageDetails[0].imageTags' --output text
    ```
 
-2. **Run it on the server through SSM Run Command**, Day 37's line, from the laptop. Set `SHA` to the full commit from step 1 first. The script itself comes from `main`'s newest commit, so the rollback runs the newest `deploy.sh` with the old tag:
+2. **Run it on the server through SSM Run Command**, the same `send-command` the `deploy` job uses, from the laptop. Set `SHA` to the full commit from step 1 first. The script itself comes from `main`'s newest commit, so the rollback runs the newest `deploy.sh` with the old tag:
 
    ```bash
    ID=$(aws ec2 describe-instances --profile pp-readonly --filters Name=tag:Name,Values=patientping-dev Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].InstanceId' --output text)

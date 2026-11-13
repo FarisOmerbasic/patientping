@@ -69,6 +69,8 @@ jobs:
       contents: read
       # Lets the job ask GitHub for its OIDC token. It gives no AWS access by itself.
       id-token: write
+    outputs:
+      server-running: ${{ steps.server.outputs.running }}
     steps:
       - uses: actions/checkout@v7
       # Actions from other publishers are pinned to a commit SHA: a tag can be moved, a SHA can't.
@@ -125,9 +127,23 @@ jobs:
           else
             docker push --all-tags "$IMAGE"
           fi
+      # The dev server only runs while it's being worked on. With no server there's nothing to
+      # deploy to, so deploy is skipped instead of waiting for an approval that can only be rejected.
+      - name: Find the dev server
+        id: server
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters Name=tag:Name,Values=patientping-dev Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          if [[ "$INSTANCE_ID" == i-* ]]; then
+            echo "running=true" >> "$GITHUB_OUTPUT"
+            echo "dev server $INSTANCE_ID runs, so deploy waits for an approval"
+          else
+            echo "running=false" >> "$GITHUB_OUTPUT"
+            echo "no dev server runs, so deploy is skipped"
+          fi
 
   deploy:
     needs: [image]
+    if: needs.image.outputs.server-running == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
