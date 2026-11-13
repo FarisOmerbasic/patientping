@@ -4,7 +4,7 @@
 [![release](https://img.shields.io/github/v/release/FarisOmerbasic/patientping)](https://github.com/FarisOmerbasic/patientping/releases)
 [![license](https://img.shields.io/github/license/FarisOmerbasic/patientping)](LICENSE)
 
-Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: Linux scripts, containers, CI/CD, AWS infrastructure built with Terraform, deploys with an automatic rollback, and monitoring with alerts, with Kubernetes after that.
+Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: Linux scripts, containers, CI/CD, AWS infrastructure built with Terraform, deploys with an automatic rollback, and monitoring with alerts.
 
 ## Tools
 
@@ -203,11 +203,3 @@ Up to commit `b95496b`, the images went to GHCR (`ghcr.io/farisomerbasic/patient
 - [`docs/adr/`](docs/adr/): design decisions, and why they were made.
 - [`docs/results.md`](docs/results.md): measured numbers, each with its target.
 - [`docs/postmortems/`](docs/postmortems/): write-ups after incidents (only the template so far).
-
-## Where it's heading
-
-| Phase | What gets built | Release |
-|---|---|---|
-| 1 | Go API and worker, Docker and Compose, CI/CD with GitHub Actions, deployment to AWS EC2 through SSM, Terraform, Prometheus, Grafana and CloudWatch alerting | `v1.0.0` |
-| 2 | Migration from EC2 to Kubernetes (EKS), Helm, GitOps with Argo CD, SLOs, upgrade exercises | `v2.0.0` |
-| 3 | Ansible, Azure, Windows Server, SQL Server operations, SRE practices | `v3.0.0` |
