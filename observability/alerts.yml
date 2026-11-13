@@ -1,0 +1,23 @@
+groups:
+  - name: patientping
+    rules:
+      - alert: APIDown
+        expr: up{job='api'} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus can't fetch /metrics from the API"
+          runbook_url: "https://github.com/FarisOmerbasic/patientping/blob/main/docs/runbooks/api-down.md"
+
+      # Only requests to /api/ count. /metrics and /healthz answer 200 several
+      # times a minute, so at a quiet hour they would keep the share under 5%
+      # even while every patient request fails (see alerts.test.yml).
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{route=~"/api/.+",code=~"5.."}[5m])) / sum(rate(http_requests_total{route=~"/api/.+"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 5% of the requests to /api/ get a 5xx"
+          runbook_url: "https://github.com/FarisOmerbasic/patientping/blob/main/docs/runbooks/api-down.md#high-error-rate"

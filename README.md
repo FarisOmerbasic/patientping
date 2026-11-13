@@ -15,9 +15,12 @@ flowchart LR
         dbinit["db-init<br/>database and login"]
         migrate["migrate<br/>tables"]
         mssql[("mssql<br/>SQL Server")]
-        prometheus["prometheus<br/>metrics"]
+        prometheus["prometheus<br/>metrics and alert rules"]
+        alertmanager["alertmanager<br/>notifications"]
         grafana["grafana<br/>dashboard"]
     end
+
+    discord([Discord channel])
 
     browser -->|"127.0.0.1:8080"| web
     web -->|"/api/ to api:8080"| api
@@ -28,6 +31,9 @@ flowchart LR
     browser -->|"127.0.0.1:9090"| prometheus
     prometheus -->|"/metrics every 15 s"| api
     prometheus -->|"/metrics every 15 s"| worker
+    prometheus -->|"firing alerts"| alertmanager
+    alertmanager -->|"webhook"| discord
+    browser -->|"127.0.0.1:9093"| alertmanager
     browser -->|"127.0.0.1:3000"| grafana
     grafana -->|"queries"| prometheus
 ```
@@ -36,7 +42,8 @@ flowchart LR
 - `api` and `worker` are two programs from the same Go image. The API answers the page's requests. The worker checks every 30 seconds for appointments that start within 24 hours and logs a reminder for each. Both connect as `pp_app`, a login that can only read and write data.
 - `prometheus` fetches `/metrics` from `api`, `worker` and itself every 15 seconds (`observability/prometheus.yml`). The API counts and times every request by route pattern, method and status code, and the worker counts the reminders it sends. nginx doesn't pass `/metrics` on, so the numbers stay inside the Compose network.
 - `grafana` draws them on the `PatientPing` dashboard: requests per second, the share of 5xx answers, p95 latency and reminders sent. Its data source and the dashboard come from files in `observability/grafana/`, so a new container has them with no clicks. The queries are explained in [`docs/observability.md`](docs/observability.md).
-- Besides `web`, only the pages of Prometheus (`127.0.0.1:9090`) and Grafana (`127.0.0.1:3000`) are published, and only on the laptop's own address.
+- `prometheus` also checks two alert rules every 15 seconds (`observability/alerts.yml`): `APIDown` when it can't fetch the API's `/metrics` for a minute, and `HighErrorRate` when more than 5% of the requests to `/api/` get a 5xx for 5 minutes. `alertmanager` sends the alerts that fire, and later their "resolved", to a Discord channel, each with a link to [the runbook](docs/runbooks/api-down.md).
+- Besides `web`, only the pages of Prometheus (`127.0.0.1:9090`), Alertmanager (`127.0.0.1:9093`) and Grafana (`127.0.0.1:3000`) are published, and only on the laptop's own address.
 - `db-init` and `migrate` run once on every start and exit with 0. `db-init` creates the database and the `pp_app` login (`migrations/000_bootstrap.sql`), and `migrate` applies the numbered migrations in `migrations/`. `api` and `worker` start only after both have finished.
 - SQL Server keeps its data in the named volume `pp-mssql`, so the data survives `make down`.
 
@@ -79,9 +86,11 @@ Prometheus's page is http://localhost:9090. Under *Status*, *Target health* list
 
 Grafana's page is http://localhost:3000. Log in with `admin` / `admin` (Grafana's default, fine only because the page listens on `127.0.0.1`) and choose *Skip* for the new password. *Dashboards*, *PatientPing* shows the four panels.
 
+The alerts go to a Discord channel. To get them, save the webhook URL of a channel of your own as the only line of `observability/discord.url`, which Git ignores, then `docker compose up -d --force-recreate alertmanager` (the steps, and a test message, are in [`docs/observability.md`](docs/observability.md#discord)). Without the file, `make up` makes it empty, and Alertmanager runs but sends nothing.
+
 `make down` stops the stack and removes the containers, and the data stays in the volume. `docker compose down -v` deletes the data too.
 
-Before a commit, `make ci` runs the lint, the tests, the two image builds and the vulnerability scan, and `make help` lists all targets. The checks need Go 1.27, `shellcheck`, `hadolint` and `trivy`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` runs two tools in containers: actionlint checks the workflow files, and gitleaks scans every commit in the history for secrets. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
+Before a commit, `make ci` runs the lint, the tests, the two image builds and the vulnerability scan, and `make help` lists all targets. The checks need Go 1.27, `shellcheck`, `hadolint` and `trivy`, and `scripts/bootstrap.sh` installs the tools on Ubuntu. They also need Docker running, because `make lint` runs four tools in containers: promtool and amtool check the Prometheus and Alertmanager files and run the alert rules' unit tests, actionlint checks the workflow files, and gitleaks scans every commit in the history for secrets. The pre-commit hook (gitleaks and shellcheck) is turned on once per clone with `git config core.hooksPath .githooks`.
 
 ## How a change reaches `main`
 

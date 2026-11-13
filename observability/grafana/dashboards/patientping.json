@@ -78,7 +78,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(sum(rate(http_requests_total{code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_requests_total[1m]))",
+          "expr": "(sum(rate(http_requests_total{route=~\"/api/.+\",code=~\"5..\"}[1m])) / (sum(rate(http_requests_total{route=~\"/api/.+\"}[1m])) > 0)) or vector(0)",
           "legendFormat": "5xx share",
           "refId": "A"
         }
