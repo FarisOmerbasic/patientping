@@ -4,9 +4,32 @@
 [![release](https://img.shields.io/github/v/release/FarisOmerbasic/patientping)](https://github.com/FarisOmerbasic/patientping/releases)
 [![license](https://img.shields.io/github/license/FarisOmerbasic/patientping)](LICENSE)
 
-Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: containers, CI/CD, AWS, infrastructure as code and monitoring, with Kubernetes after that.
+Clinics store patients and appointments through a Go API backed by SQL Server, and a worker sends a reminder before each appointment. The app is kept small on purpose. The work is in everything around it: Linux scripts, containers, CI/CD, AWS infrastructure built with Terraform, deploys with an automatic rollback, and monitoring with alerts, with Kubernetes after that.
 
-**Tools:** Bash, Go, Docker and Compose, nginx, SQL Server, GitHub Actions, AWS (EC2, ECR, S3, IAM, Systems Manager), Terraform, Prometheus, Alertmanager, Grafana.
+## Tools
+
+![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![nginx](https://img.shields.io/badge/nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL_Server-CC2927?style=for-the-badge)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-FF9900?style=for-the-badge)
+![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+![Alertmanager](https://img.shields.io/badge/Alertmanager-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+
+| Area | Tools |
+|---|---|
+| Linux and Bash | Bash scripts in strict mode, checked by `shellcheck`; a systemd service and timer; `make` for every check |
+| The app | Go (the API and the worker), SQL Server, nginx in front |
+| Containers | Docker multi-stage builds running as non-root users, Docker Compose, `hadolint`, `trivy` |
+| CI/CD | GitHub Actions, OIDC into AWS with no stored keys, a ruleset on `main`, `actionlint`, `gitleaks` |
+| AWS | VPC with a public subnet and an internet gateway, EC2, IAM and STS, ECR, S3, Systems Manager (Run Command, Session Manager, Parameter Store) |
+| Infrastructure as code | Terraform with its state in S3 and a lock file, a reusable network module, `tflint` |
+| Monitoring | Prometheus, Grafana with the dashboard as code, Alertmanager, Discord |
 
 ## Architecture
 
